@@ -8,15 +8,31 @@ const {
   getByHsnCode,
   search,
   count,
+  deActiveById,
+  updateById,
+  deActiveByHsnCode,
+  deActiveByIdInBulk,
+  activeAll,
+  activeById,
+  exportData,
 } = require("../controllers/HsnController");
-const { Op } = require("sequelize");
+const { Op, json } = require("sequelize");
+const { Parser } = require("json2csv");
 const router = express.Router();
+const ExcelJS = require("exceljs");
+const multer = require("multer");
+const fs = require("fs");
+
+const upload = multer({ dest: "upload/" });
 
 // CREATE HSN CODE
 router.post("/", createHsn);
 
 // CREATE IN BULK
 router.post("/bulk", createBulk);
+
+// EXPORT TO EXCEL/CSV/JSON/PDF
+router.get("/export/:format", exportData);
 
 // GET ALL HSN CODE
 router.get("/", getAll);
@@ -34,35 +50,18 @@ router.get("/:id", getById);
 router.get("/code/:code", getByHsnCode);
 
 // UPDATE BY ID
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { description, cGst, sGst, iGst } = req.body;
+router.put("/:id", updateById);
 
-    const data = await Hsn.findOne({
-      where: {
-        id: id,
-      },
-    });
-    if (!data)
-      return res.json({ message: "No data found", status: false }).status(404);
+// DELETE BY ID
+router.delete("/:id", deActiveById);
+router.delete("/hsn/:hsnCode", deActiveByHsnCode);
 
-    if (data.iGst) {
-      await Hsn.update(
-        { description: description, iGst: iGst },
-        { where: { id: id } }
-      );
-    } else {
-      await Hsn.update(
-        { description: description, cGst: cGst, sGst: sGst },
-        { where: { id: id } }
-      );
-    }
+// DELETE IN BULK BY ID
+router.delete("/bulk/id", deActiveByIdInBulk);
 
-    return res.json({ message: "Successfully updated", status: true });
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
+router.patch("/active/all", activeAll);
+
+router.patch("/active/:id", activeById);
+
 
 module.exports = router;
