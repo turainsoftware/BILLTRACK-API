@@ -48,6 +48,14 @@ const Hsn = sequilize.define(
         return this.getDataValue("iGst");
       },
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false,
+      get() {
+        return this.getDataValue("isActive");
+      },
+    },
   },
   {
     timestamps: false,
