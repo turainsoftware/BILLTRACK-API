@@ -9,6 +9,9 @@ const ProductCategoryRouter = require("./routers/ProductCategoyRouter.js");
 // Middleware Imports
 const logger = require("./middleware/Logger.js");
 
+// SWAGGER UI
+const { specs, swaggerUi } = require("./config/swagger.config.js");
+
 // Import COnfig
 const { PORT } = require("./config/config");
 const { connectDB, sequilize } = require("./config/db");
@@ -18,6 +21,17 @@ const app = express();
 
 // MIDDLEWARE
 app.use(express.json());
+
+//SWAGGER DOCUMENTATION ROUTE
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "HSN API Documentation",
+  })
+);
 
 // ROUTES
 app.use("/api/v1/businessCategory", logger, BusinessCategoryRouter);
@@ -30,6 +44,7 @@ app.get("/test", (req, res) => {
     message: "hello world",
   });
 });
+
 
 connectDB();
 sequilize
