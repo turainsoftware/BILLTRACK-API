@@ -1,9 +1,9 @@
 const { DataTypes } = require("sequelize");
-const { sequilize } = require("./../config/db");
+const { sequilize } = require("../config/db");
 const { Business } = require("./Business");
 
-const Invoice = sequilize.define(
-  "Invoice",
+const User = sequilize.define(
+  "User",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,18 +18,37 @@ const Invoice = sequilize.define(
         key: "id",
       },
     },
-    userId: {
-      type: DataTypes.INTEGER,
+    name: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    totalAmount: {
-      type: DataTypes.DECIMAL(10, 2),
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    otp: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    status: {
-      type: DataTypes.ENUM("paid", "unpaid", "canceled"),
+    role: {
+      type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN"),
       allowNull: false,
-      defaultValue: "unpaid",
+      defaultValue: "admin",
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    otpExpiry: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -43,14 +62,14 @@ const Invoice = sequilize.define(
     },
   },
   {
-    tableName: "invoices",
+    tableName: "user",
     timestamps: true,
   }
 );
 
-Invoice.belongsTo(Business, {
+User.belongsTo(Business, {
   foreignKey: "businessId",
   as: "business",
 });
 
-module.exports = { Invoice };
+module.exports = { User };
