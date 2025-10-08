@@ -21,12 +21,17 @@ router.post("/", async (req, res) => {
     if (!name || !businessCategoryId) {
       return res
         .status(400)
-        .json({ message: "Business name and category are required", status: false });
+        .json({
+          message: "Business name and category are required",
+          status: false,
+        });
     }
 
     const category = await BusinessCategory.findByPk(businessCategoryId);
     if (!category) {
-      return res.status(400).json({ message: "Invalid business category", status: false });
+      return res
+        .status(400)
+        .json({ message: "Invalid business category", status: false });
     }
 
     const existingBusiness = await Business.findOne({
@@ -63,7 +68,21 @@ router.post("/", async (req, res) => {
     console.error("Error creating business:", error);
     return res
       .status(500)
-      .json({ message: "Something went wrong", status: false, error: error.message });
+      .json({
+        message: "Something went wrong",
+        status: false,
+        error: error.message,
+      });
+  }
+});
+
+router.get("/user/:id", async (req, res) => {
+  try {
+    const {id}=req.params;
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Something went wrong", status: false });
   }
 });
 
