@@ -24,7 +24,7 @@ const Product = sequilize.define(
     },
   },
   {
-    tableName: "product_entities",
+    tableName: "product",
     timestamps: false,
   }
 );
