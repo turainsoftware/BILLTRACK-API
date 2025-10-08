@@ -107,8 +107,6 @@ const {
   pagination,
   deleteBulk,
 } = require("../controllers/ProductCategoryController");
-const { where, Op } = require("sequelize");
-const { off } = require("pdfkit");
 const router = express.Router();
 
 /**
