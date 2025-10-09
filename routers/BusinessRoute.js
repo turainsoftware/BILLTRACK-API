@@ -1,10 +1,78 @@
 const express = require("express");
-const { Business } = require("../models/Business");
 const router = express.Router();
 
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
+const { randomUUID } = require("crypto");
+const { Op } = require("sequelize");
+
+const { LOGO_DIR } = require("../config/config");
+const { Business } = require("../models/Business");
+const { BusinessCategory } = require("../models/BusinessCategory");
+
+// Ensure logo directory exists
+if (!fs.existsSync(LOGO_DIR)) {
+  fs.mkdirSync(LOGO_DIR, { recursive: true });
+}
+
+// Allowed image mime types for logos
+const ALLOWED_MIME = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/webp": "webp",
+};
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, LOGO_DIR),
+  filename: (req, file, cb) => {
+    const ext = ALLOWED_MIME[file.mimetype];
+    const safeExt = ext ? `.${ext}` : path.extname(file.originalname).toLowerCase();
+    const fileName = `${randomUUID()}${safeExt}`;
+    cb(null, fileName);
+  },
+});
+
+// Multer file filter
+function fileFilter(req, file, cb) {
+  if (!ALLOWED_MIME[file.mimetype]) {
+    return cb(new Error("Only PNG, JPG, and WEBP image types are allowed for the logo"));
+  }
+  cb(null, true);
+}
+
+// 5 MB size limit for logos
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+// Utility to delete an uploaded file (best-effort)
+function deleteUploadedFileSafely(file) {
+  if (!file?.path && file?.filename) {
+    try {
+      fs.unlinkSync(path.join(LOGO_DIR, file.filename));
+    } catch (_) {
+      // ignore
+    }
+    return;
+  }
+  if (file?.path) {
+    try {
+      fs.unlinkSync(file.path);
+    } catch (_) {
+      // ignore
+    }
+  }
+}
+
 // Create a new business
-router.post("/", async (req, res) => {
+router.post("/", upload.single("logo"), async (req, res) => {
   try {
+    // Basic validation
     const {
       name,
       gstNumber,
@@ -15,48 +83,84 @@ router.post("/", async (req, res) => {
       email,
       phone,
       businessCategoryId,
-      logoUrl,
-    } = req.body;
+    } = req.body || {};
 
+    // Logo is required
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Business logo is required",
+        status: false,
+      });
+    }
+
+    // Validate required fields
     if (!name || !businessCategoryId) {
-      return res
-        .status(400)
-        .json({
-          message: "Business name and category are required",
-          status: false,
-        });
+      deleteUploadedFileSafely(req.file);
+      return res.status(400).json({
+        message: "Business name and category are required",
+        status: false,
+      });
     }
 
-    const category = await BusinessCategory.findByPk(businessCategoryId);
+    // Validate category id is a number (if your PK is numeric)
+    const categoryIdNum = Number(businessCategoryId);
+    if (!Number.isFinite(categoryIdNum) || categoryIdNum <= 0) {
+      deleteUploadedFileSafely(req.file);
+      return res.status(400).json({
+        message: "Invalid business category",
+        status: false,
+      });
+    }
+
+    if (!gstNumber || typeof gstNumber !== "string" || !gstNumber.trim()) {
+      deleteUploadedFileSafely(req.file);
+      return res.status(400).json({
+        message: "GST number is required",
+        status: false,
+      });
+    }
+
+    // Normalize inputs
+    const normalizedGst = gstNumber.trim().toUpperCase();
+    const normalizedName = String(name).trim();
+    const normalizedEmail = typeof email === "string" ? email.trim() : email;
+    const normalizedPhone = typeof phone === "string" ? phone.trim() : phone;
+    const normalizedPin = typeof pincode === "string" ? pincode.trim() : pincode;
+
+    // Ensure category exists
+    const category = await BusinessCategory.findByPk(categoryIdNum);
     if (!category) {
-      return res
-        .status(400)
-        .json({ message: "Invalid business category", status: false });
+      deleteUploadedFileSafely(req.file);
+      return res.status(400).json({
+        message: "Invalid business category",
+        status: false,
+      });
     }
 
+    // Uniqueness check (GST)
     const existingBusiness = await Business.findOne({
-      where: {
-        [Business.sequelize.Op.or]: [{ email }, { gstNumber }],
-      },
+      where: { gstNumber: normalizedGst },
     });
-
     if (existingBusiness) {
-      return res
-        .status(400)
-        .json({ message: "Email or GST number already exists", status: false });
+      deleteUploadedFileSafely(req.file);
+      return res.status(400).json({
+        message: "GST number already exists",
+        status: false,
+      });
     }
 
+    // Persist business
     const newBusiness = await Business.create({
-      name,
-      gstNumber,
-      street,
-      city,
-      state,
-      pinCode: pincode,
-      email,
-      phone,
-      businessCategoryId,
-      logoUrl,
+      name: normalizedName,
+      gstNumber: normalizedGst,
+      street: street ?? null,
+      city: city ?? null,
+      state: state ?? null,
+      pinCode: normalizedPin ?? null,
+      email: normalizedEmail ?? null,
+      phone: normalizedPhone ?? null,
+      businessCategoryId: categoryIdNum,
+      logoUrl: req.file.filename, 
     });
 
     return res.status(201).json({
@@ -65,20 +169,35 @@ router.post("/", async (req, res) => {
       data: newBusiness,
     });
   } catch (error) {
-    console.error("Error creating business:", error);
-    return res
-      .status(500)
-      .json({
-        message: "Something went wrong",
+    if (req.file) {
+      deleteUploadedFileSafely(req.file);
+    }
+
+    // Multer-specific errors (e.g., file too large, invalid mime)
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({
+        message: error.message,
         status: false,
-        error: error.message,
       });
+    }
+
+    console.error("Error creating business:", error);
+    return res.status(500).json({
+      message: "Something went wrong",
+      status: false,
+      error: process.env.NODE_ENV !== "production" ? error.message : undefined,
+    });
   }
 });
 
+// Placeholder (kept as-is)
 router.get("/user/:id", async (req, res) => {
   try {
-    const {id}=req.params;
+    const { id } = req.params;
+    return res.status(501).json({
+      message: "Not implemented",
+      status: false,
+    });
   } catch (error) {
     return res
       .status(500)

@@ -6,12 +6,14 @@ const HsnRouter = require("./routers/HsnRouter.js");
 const ProductCategoryRouter = require("./routers/ProductCategoyRouter.js");
 const InvoiceRouter = require("./routers/InvoiceRouter.js");
 const UserRouter = require("./routers/UserRouter.js");
+const BusinessRouter = require("./routers/BusinessRoute.js");
 
 const logger = require("./middleware/Logger.js");
 
 const { specs, swaggerUi } = require("./config/swagger.config.js");
 
-const { PORT } = require("./config/config");
+// Import COnfig
+const { PORT, LOGO_DIR } = require("./config/config");
 const { connectDB, sequilize } = require("./config/db");
 
 const app = express();
@@ -30,11 +32,15 @@ app.use(
 
 // ROUTES
 app.use("/api/v1/businessCategory", logger, BusinessCategoryRouter);
-app.use("/api/v1/products", logger, ProductRouter);
+// app.use("/api/v1/products", logger, ProductRouter);
 app.use("/api/v1/hsn", logger, HsnRouter);
 app.use("/api/v1/product-category", logger, ProductCategoryRouter);
 app.use("/api/v1/invoice", logger, InvoiceRouter);
 app.use("/api/v1/user", logger, UserRouter);
+app.use("/api/v1/business", logger, BusinessRouter);
+
+// file routes
+app.use("/api/v1/files/logo", express.static(LOGO_DIR));
 
 app.get("/test", (req, res) => {
   return res.json({
