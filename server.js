@@ -1,29 +1,23 @@
 const express = require("express");
 
-// routers imports
 const BusinessCategoryRouter = require("./routers/BusinessCategoryRouter.js");
-const productRouter = require("./routers/productRouter");
+const ProductRouter = require("./routers/productRouter");
 const HsnRouter = require("./routers/HsnRouter.js");
 const ProductCategoryRouter = require("./routers/ProductCategoyRouter.js");
 const InvoiceRouter = require("./routers/InvoiceRouter.js");
+const UserRouter = require("./routers/UserRouter.js");
 
-// Middleware Imports
 const logger = require("./middleware/Logger.js");
 
-// SWAGGER UI
 const { specs, swaggerUi } = require("./config/swagger.config.js");
 
-// Import COnfig
 const { PORT } = require("./config/config");
 const { connectDB, sequilize } = require("./config/db");
 
-// APP CREATION
 const app = express();
 
-// MIDDLEWARE
 app.use(express.json());
 
-//SWAGGER DOCUMENTATION ROUTE
 app.use(
   "/api-docs",
   swaggerUi.serve,
@@ -36,10 +30,11 @@ app.use(
 
 // ROUTES
 app.use("/api/v1/businessCategory", logger, BusinessCategoryRouter);
-app.use("/api/v1/products", logger, productRouter);
+app.use("/api/v1/products", logger, ProductRouter);
 app.use("/api/v1/hsn", logger, HsnRouter);
 app.use("/api/v1/product-category", logger, ProductCategoryRouter);
 app.use("/api/v1/invoice", logger, InvoiceRouter);
+app.use("/api/v1/user", logger, UserRouter);
 
 app.get("/test", (req, res) => {
   return res.json({
