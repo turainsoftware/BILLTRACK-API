@@ -10,6 +10,8 @@ const { Op } = require("sequelize");
 const { LOGO_DIR } = require("../config/config");
 const { Business } = require("../models/Business");
 const { BusinessCategory } = require("../models/BusinessCategory");
+const { jwtMiddleware } = require("../middleware/JwtMiddlware");
+const { User } = require("../models/User");
 
 // Ensure logo directory exists
 if (!fs.existsSync(LOGO_DIR)) {
@@ -29,7 +31,9 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, LOGO_DIR),
   filename: (req, file, cb) => {
     const ext = ALLOWED_MIME[file.mimetype];
-    const safeExt = ext ? `.${ext}` : path.extname(file.originalname).toLowerCase();
+    const safeExt = ext
+      ? `.${ext}`
+      : path.extname(file.originalname).toLowerCase();
     const fileName = `${randomUUID()}${safeExt}`;
     cb(null, fileName);
   },
@@ -38,7 +42,9 @@ const storage = multer.diskStorage({
 // Multer file filter
 function fileFilter(req, file, cb) {
   if (!ALLOWED_MIME[file.mimetype]) {
-    return cb(new Error("Only PNG, JPG, and WEBP image types are allowed for the logo"));
+    return cb(
+      new Error("Only PNG, JPG, and WEBP image types are allowed for the logo")
+    );
   }
   cb(null, true);
 }
@@ -70,9 +76,10 @@ function deleteUploadedFileSafely(file) {
 }
 
 // Create a new business
-router.post("/", upload.single("logo"), async (req, res) => {
+router.post("/", jwtMiddleware, upload.single("logo"), async (req, res) => {
   try {
     // Basic validation
+    const userId = req.user.id;
     const {
       name,
       gstNumber,
@@ -125,7 +132,8 @@ router.post("/", upload.single("logo"), async (req, res) => {
     const normalizedName = String(name).trim();
     const normalizedEmail = typeof email === "string" ? email.trim() : email;
     const normalizedPhone = typeof phone === "string" ? phone.trim() : phone;
-    const normalizedPin = typeof pincode === "string" ? pincode.trim() : pincode;
+    const normalizedPin =
+      typeof pincode === "string" ? pincode.trim() : pincode;
 
     // Ensure category exists
     const category = await BusinessCategory.findByPk(categoryIdNum);
@@ -160,8 +168,13 @@ router.post("/", upload.single("logo"), async (req, res) => {
       email: normalizedEmail ?? null,
       phone: normalizedPhone ?? null,
       businessCategoryId: categoryIdNum,
-      logoUrl: req.file.filename, 
+      logoUrl: req.file.filename,
     });
+
+    await User.update(
+      { businessId: newBusiness.id },
+      { where: { id: userId } }
+    );
 
     return res.status(201).json({
       message: "Business created successfully",
@@ -190,19 +203,31 @@ router.post("/", upload.single("logo"), async (req, res) => {
   }
 });
 
-// Placeholder (kept as-is)
-router.get("/user/:id", async (req, res) => {
+// GET BUSINESS DETAILS BY USER
+router.get("/", jwtMiddleware, async (req, res) => {
   try {
-    const { id } = req.params;
-    return res.status(501).json({
-      message: "Not implemented",
-      status: false,
+    const userId = req.user.id;
+
+    const user = await User.findOne({
+      where: {
+        id: userId,
+      },
+      attributes: ["businessId"],
     });
+    console.info(user);
+    const business = await Business.findOne({
+      where: {
+        id: user.businessId,
+      },
+    });
+    return res.json({ data: business, status: true });
   } catch (error) {
     return res
       .status(500)
       .json({ message: "Something went wrong", status: false });
   }
 });
+
+
 
 module.exports = router;
