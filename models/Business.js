@@ -72,7 +72,7 @@ const Business = sequilize.define(
     },
   },
   {
-    tableName: "businesses",
+    tableName: "business",
     timestamps: true,
   }
 );
