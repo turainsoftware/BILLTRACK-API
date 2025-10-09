@@ -12,7 +12,7 @@ const User = sequilize.define(
     },
     businessId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,  // ✅ allow null at login
       references: {
         model: "Business",
         key: "id",
@@ -20,7 +20,7 @@ const User = sequilize.define(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,  // ✅ allow null
     },
     phone: {
       type: DataTypes.STRING,
@@ -29,7 +29,7 @@ const User = sequilize.define(
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,  // ✅ allow null
       unique: true,
     },
     otp: {
@@ -39,7 +39,7 @@ const User = sequilize.define(
     role: {
       type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN"),
       allowNull: false,
-      defaultValue: "admin",
+      defaultValue: "EMPLOYEE", // ✅ better default
     },
     isActive: {
       type: DataTypes.BOOLEAN,
@@ -69,7 +69,7 @@ const User = sequilize.define(
 
 User.belongsTo(Business, {
   foreignKey: "businessId",
-  as: "business",
+  as: "businesses",
 });
 
 module.exports = { User };
