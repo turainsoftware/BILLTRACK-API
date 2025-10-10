@@ -12,7 +12,7 @@ const User = sequilize.define(
     },
     businessId: {
       type: DataTypes.INTEGER,
-      allowNull: true,  // ✅ allow null at login
+      allowNull: true,
       references: {
         model: "Business",
         key: "id",
@@ -20,7 +20,7 @@ const User = sequilize.define(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: true,  // ✅ allow null
+      allowNull: true,
     },
     phone: {
       type: DataTypes.STRING,
@@ -29,12 +29,13 @@ const User = sequilize.define(
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: true,  // ✅ allow null
+      allowNull: true, // ✅ allow null
       unique: true,
     },
     otp: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: "0000",
     },
     role: {
       type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN"),

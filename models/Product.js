@@ -57,6 +57,10 @@ const Product = sequilize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    logo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

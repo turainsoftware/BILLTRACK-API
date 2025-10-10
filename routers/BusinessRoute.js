@@ -228,6 +228,29 @@ router.get("/", jwtMiddleware, async (req, res) => {
   }
 });
 
+// update address
+router.put("/address", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    if (user.role !== "ADMIN") {
+      return res.json({ message: "You are not authorized", status: false });
+    }
+    const { street, city, state, pincode } = req.body;
 
+    if (!street || !city || !state || !pincode) {
+      return res.json({ message: "All fields are required", status: false });
+    }
+
+    await Business.update(
+      { street, city, state, pincode },
+      { where: { id: user.businessId } }
+    );
+    return res
+      .json({ message: "Successfully updated", status: true })
+      .status(200);
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+});
 
 module.exports = router;
