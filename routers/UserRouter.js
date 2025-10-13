@@ -9,6 +9,9 @@ const {
   profile,
   allUser,
   createUser,
+  deactiveUser,
+  reactiveUser,
+  updateProfile,
 } = require("../controllers/UserController");
 const { jwtMiddleware } = require("../middleware/JwtMiddlware");
 const { User } = require("../models/User");
@@ -22,57 +25,10 @@ router.get("/all-user", jwtMiddleware, allUser);
 // create a user by admin
 router.post("/user", jwtMiddleware, createUser);
 
-router.patch("/deactivate-user/:id", jwtMiddleware, async (req, res) => {
-  try {
-    const user = req.user;
-    if (user?.role !== "ADMIN") {
-      return res.json({ message: "You are not authorized", status: false });
-    }
-    const { id } = req.params;
+router.patch("/deactivate-user/:id", jwtMiddleware, deactiveUser);
 
-    const updateUser = await User.update(
-      { isActive: false },
-      { where: { id } }
-    );
-    return res
-      .json({ message: "Successfully updated", status: true })
-      .status(200);
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
+router.patch("/reactive-user/:id", jwtMiddleware, reactiveUser);
 
-router.patch("/reactive-user/:id", jwtMiddleware, async (req, res) => {
-  try {
-    const user = req.user;
-    if (user?.role !== "ADMIN") {
-      return res.json({ message: "You are not authorized", status: false });
-    }
-    const { id } = req.params;
-
-    const updateUser = await User.update({ isActive: true }, { where: { id } });
-    return res
-      .json({ message: "Successfully updated", status: true })
-      .status(200);
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
-
-router.put("/update-profile", jwtMiddleware, async (req, res) => {
-  try {
-    const user = req.user;
-    const { name, email } = req.body;
-    const updateUser = await User.update(
-      { name, email },
-      { where: { id: user.id } }
-    );
-    return res
-      .json({ message: "Successfully updated", status: true })
-      .status(200);
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
+router.put("/update-profile", jwtMiddleware, updateProfile);
 
 module.exports = router;
