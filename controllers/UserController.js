@@ -105,8 +105,64 @@ const verifyOtp = async (req, res) => {
   } catch (error) {}
 };
 
+const deactiveUser=async (req, res) => {
+  try {
+    const user = req.user;
+    if (user?.role !== "ADMIN") {
+      return res.json({ message: "You are not authorized", status: false });
+    }
+    const { id } = req.params;
+
+    const updateUser = await User.update(
+      { isActive: false },
+      { where: { id } }
+    );
+    return res
+      .json({ message: "Successfully updated", status: true })
+      .status(200);
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+}
+
+const reactiveUser=async (req, res) => {
+  try {
+    const user = req.user;
+    if (user?.role !== "ADMIN") {
+      return res.json({ message: "You are not authorized", status: false });
+    }
+    const { id } = req.params;
+
+    const updateUser = await User.update({ isActive: true }, { where: { id } });
+    return res
+      .json({ message: "Successfully updated", status: true })
+      .status(200);
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+}
+
+const updateProfile=async (req, res) => {
+  try {
+    const user = req.user;
+    const { name, email } = req.body;
+    const updateUser = await User.update(
+      { name, email },
+      { where: { id: user.id } }
+    );
+    return res
+      .json({ message: "Successfully updated", status: true })
+      .status(200);
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+}
+
 module.exports = {
   profile,
   allUser,
   createUser,
+  deactiveUser,
+  reactiveUser,
+  updateProfile
 };
