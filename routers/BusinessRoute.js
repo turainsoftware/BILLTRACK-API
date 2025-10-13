@@ -12,6 +12,11 @@ const { Business } = require("../models/Business");
 const { BusinessCategory } = require("../models/BusinessCategory");
 const { jwtMiddleware } = require("../middleware/JwtMiddlware");
 const { User } = require("../models/User");
+const {
+  addBusiness,
+  getBusiness,
+  updateAddress,
+} = require("../controllers/BusinessController");
 
 // Ensure logo directory exists
 if (!fs.existsSync(LOGO_DIR)) {
@@ -76,181 +81,12 @@ function deleteUploadedFileSafely(file) {
 }
 
 // Create a new business
-router.post("/", jwtMiddleware, upload.single("logo"), async (req, res) => {
-  try {
-    // Basic validation
-    const userId = req.user.id;
-    const {
-      name,
-      gstNumber,
-      street,
-      city,
-      state,
-      pincode,
-      email,
-      phone,
-      businessCategoryId,
-    } = req.body || {};
-
-    // Logo is required
-    if (!req.file) {
-      return res.status(400).json({
-        message: "Business logo is required",
-        status: false,
-      });
-    }
-
-    // Validate required fields
-    if (!name || !businessCategoryId) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "Business name and category are required",
-        status: false,
-      });
-    }
-
-    // Validate category id is a number (if your PK is numeric)
-    const categoryIdNum = Number(businessCategoryId);
-    if (!Number.isFinite(categoryIdNum) || categoryIdNum <= 0) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "Invalid business category",
-        status: false,
-      });
-    }
-
-    if (!gstNumber || typeof gstNumber !== "string" || !gstNumber.trim()) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "GST number is required",
-        status: false,
-      });
-    }
-
-    // Normalize inputs
-    const normalizedGst = gstNumber.trim().toUpperCase();
-    const normalizedName = String(name).trim();
-    const normalizedEmail = typeof email === "string" ? email.trim() : email;
-    const normalizedPhone = typeof phone === "string" ? phone.trim() : phone;
-    const normalizedPin =
-      typeof pincode === "string" ? pincode.trim() : pincode;
-
-    // Ensure category exists
-    const category = await BusinessCategory.findByPk(categoryIdNum);
-    if (!category) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "Invalid business category",
-        status: false,
-      });
-    }
-
-    // Uniqueness check (GST)
-    const existingBusiness = await Business.findOne({
-      where: { gstNumber: normalizedGst },
-    });
-    if (existingBusiness) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "GST number already exists",
-        status: false,
-      });
-    }
-
-    // Persist business
-    const newBusiness = await Business.create({
-      name: normalizedName,
-      gstNumber: normalizedGst,
-      street: street ?? null,
-      city: city ?? null,
-      state: state ?? null,
-      pinCode: normalizedPin ?? null,
-      email: normalizedEmail ?? null,
-      phone: normalizedPhone ?? null,
-      businessCategoryId: categoryIdNum,
-      logoUrl: req.file.filename,
-    });
-
-    await User.update(
-      { businessId: newBusiness.id },
-      { where: { id: userId } }
-    );
-
-    return res.status(201).json({
-      message: "Business created successfully",
-      status: true,
-      data: newBusiness,
-    });
-  } catch (error) {
-    if (req.file) {
-      deleteUploadedFileSafely(req.file);
-    }
-
-    // Multer-specific errors (e.g., file too large, invalid mime)
-    if (error instanceof multer.MulterError) {
-      return res.status(400).json({
-        message: error.message,
-        status: false,
-      });
-    }
-
-    console.error("Error creating business:", error);
-    return res.status(500).json({
-      message: "Something went wrong",
-      status: false,
-      error: process.env.NODE_ENV !== "production" ? error.message : undefined,
-    });
-  }
-});
+router.post("/", jwtMiddleware, upload.single("logo"), addBusiness);
 
 // GET BUSINESS DETAILS BY USER
-router.get("/", jwtMiddleware, async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    const user = await User.findOne({
-      where: {
-        id: userId,
-      },
-      attributes: ["businessId"],
-    });
-    console.info(user);
-    const business = await Business.findOne({
-      where: {
-        id: user.businessId,
-      },
-    });
-    return res.json({ data: business, status: true });
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Something went wrong", status: false });
-  }
-});
+router.get("/", jwtMiddleware, getBusiness);
 
 // update address
-router.put("/address", jwtMiddleware, async (req, res) => {
-  try {
-    const user = req.user;
-    if (user.role !== "ADMIN") {
-      return res.json({ message: "You are not authorized", status: false });
-    }
-    const { street, city, state, pincode } = req.body;
-
-    if (!street || !city || !state || !pincode) {
-      return res.json({ message: "All fields are required", status: false });
-    }
-
-    await Business.update(
-      { street, city, state, pincode },
-      { where: { id: user.businessId } }
-    );
-    return res
-      .json({ message: "Successfully updated", status: true })
-      .status(200);
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
+router.put("/address", jwtMiddleware, updateAddress);
 
 module.exports = router;
