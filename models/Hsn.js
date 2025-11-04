@@ -59,7 +59,7 @@ const Hsn = sequilize.define(
   },
   {
     timestamps: false,
-    tableName: "hsn",
+    tableName: "Hsn",
   }
 );
 

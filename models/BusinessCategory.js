@@ -31,7 +31,7 @@ const BusinessCategory = sequilize.define(
   },
   {
     timestamps: true,
-    tableName: "businessCategory",
+    tableName: "BusinessCategory",
   }
 );
 

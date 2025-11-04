@@ -63,7 +63,7 @@ const User = sequilize.define(
     },
   },
   {
-    tableName: "user",
+    tableName: "User",
     timestamps: true,
   }
 );

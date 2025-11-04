@@ -76,7 +76,7 @@ const Product = sequilize.define(
     },
   },
   {
-    tableName: "product",
+    tableName: "Product",
     timestamps: true,
   }
 );
