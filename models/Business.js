@@ -72,9 +72,8 @@ const Business = sequilize.define(
     },
   },
   {
-    tableName: "business",
+    tableName: "Business",
     timestamps: true,
-    freezeTableName: true,
   }
 );
 

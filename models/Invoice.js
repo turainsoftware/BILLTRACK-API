@@ -43,7 +43,7 @@ const Invoice = sequilize.define(
     },
   },
   {
-    tableName: "invoices",
+    tableName: "Invoices",
     timestamps: true,
   }
 );
