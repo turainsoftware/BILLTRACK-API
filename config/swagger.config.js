@@ -1,5 +1,6 @@
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const { SERVER_IP } = require("./config");
 
 const options = {
   definition: {
@@ -21,6 +22,9 @@ const options = {
       {
         url: `http://localhost:${process.env.PORT || 3000}/api/v1`,
         description: "Development server",
+      },{
+        url: `http://${SERVER_IP}:${process.env.PORT || 3000}/api/v1`,
+        description: "Production server",
       },
     ],
     components: {
