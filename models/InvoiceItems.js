@@ -14,7 +14,7 @@ const InvoiceItems = sequilize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "invoices",
+        model: "Invoices",
         key: "id",
       },
     },
