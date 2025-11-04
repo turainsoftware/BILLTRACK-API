@@ -53,7 +53,7 @@ const Business = sequilize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "businessCategory",
+        model: "BusinessCategory",
         key: "id",
       },
     },
