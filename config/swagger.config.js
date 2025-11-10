@@ -15,7 +15,7 @@ const options = {
 **Developer**: GREAT DEVELOPER PRITAM BALA`,
       contact: {
         name: "API Support",
-        email: "jhantu.developer@gmail.com",
+        email: "jhantubala@zohomail.in",
       },
     },
     servers: [
