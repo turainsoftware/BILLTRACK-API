@@ -77,6 +77,39 @@ const deleteUploadedFileSafely = (file) => {
 
 router.post("/", jwtMiddleware, upload.single("logo"), create);
 
+router.post("/bulk", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const { products } = req.body;
+
+    if (!Array.isArray(products)) {
+      return res.json({ message: "Invalid data format", status: false });
+    }
+
+    const finalSaveData = [];
+    let unSavedData = 0;
+
+    products.forEach((item) => {
+      if (
+        !item.name ||
+        !item.productCategoryId ||
+        !item.hsnId ||
+        !item.unitType
+      ) {
+        unSavedData += 1;
+        return;
+      }
+      finalSaveData.push({ ...item, businessId: user.businessId });
+    });
+
+    await Product.bulkCreate(finalSaveData);
+
+    return res.json({ message: "Product added successfully", status: true });
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+});
+
 router.get("/all", jwtMiddleware, getAll);
 
 router.patch(

@@ -46,7 +46,6 @@ const Product = sequilize.define(
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
     },
     unitType: {
       type: DataTypes.STRING,
