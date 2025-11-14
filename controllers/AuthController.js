@@ -75,16 +75,16 @@ const loginWithPhone = async (req, res) => {
       callbackData: "cb",
     };
 
-    // const response = await axios.post(
-    //   "https://smscannon.com/api/api.php",
-    //   data,
-    //   {
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Authorization: "Key ffc98cf3cf74d71941a9f5aefeb021af",
-    //     },
-    //   }
-    // );
+    const response = await axios.post(
+      "https://smscannon.com/api/api.php",
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Key ffc98cf3cf74d71941a9f5aefeb021af",
+        },
+      }
+    );
 
     return res.status(200).json({
       message: "OTP sent successfully",

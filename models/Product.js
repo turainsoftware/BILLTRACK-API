@@ -22,7 +22,7 @@ const Product = sequilize.define(
     },
     productCategoryId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: "ProductCategory",
         key: "id",
@@ -31,11 +31,6 @@ const Product = sequilize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    sku: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      unique: true,
     },
     description: {
       type: DataTypes.TEXT,
@@ -51,6 +46,10 @@ const Product = sequilize.define(
     },
     price: {
       type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    unitType: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
     stockQuantity: {
