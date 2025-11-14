@@ -7,11 +7,15 @@ const {
   updateById,
   deleteById,
   reactiveById,
+  createBusinessCategoryBulk,
 } = require("../controllers/BusinessCategoryController");
 const router = express.Router();
 
 // CREATE
 router.post("/", createBusinessCategory);
+
+// CREATE IN BULK
+router.post("/bulk", createBusinessCategoryBulk);
 
 // GET ALL BY STATUS
 router.get("/status", async (req, res) => {

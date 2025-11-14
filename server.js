@@ -8,6 +8,7 @@ const InvoiceRouter = require("./routers/InvoiceRouter.js");
 const UserRouter = require("./routers/UserRouter.js");
 const BusinessRouter = require("./routers/BusinessRoute.js");
 const AuthRoutes = require("./routers/AuthRoutes.js");
+const ProductSuggesionRouter = require("./routers/ProductSuggestionRoute.js");
 
 const logger = require("./middleware/Logger.js");
 
@@ -35,6 +36,7 @@ app.use(
 app.use("/api/v1/auth", AuthRoutes);
 
 // ROUTES
+app.use("/api/v1/product-suggestion", logger, ProductSuggesionRouter);
 app.use("/api/v1/businessCategory", logger, BusinessCategoryRouter);
 app.use("/api/v1/product", logger, ProductRouter);
 app.use("/api/v1/hsn", logger, HsnRouter);
@@ -51,6 +53,9 @@ app.get("/test", (req, res) => {
   return res.json({
     message: "hello world",
   });
+});
+app.get("/", (req, res) => {
+  return res.redirect("https://billtrack.co.in");
 });
 
 connectDB();

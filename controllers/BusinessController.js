@@ -1,4 +1,5 @@
 const fs = require("fs");
+const multer = require("multer");
 const { BusinessCategory } = require("../models/BusinessCategory");
 const { Business } = require("../models/Business");
 const { User } = require("../models/User");
