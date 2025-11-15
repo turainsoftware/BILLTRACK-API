@@ -122,6 +122,51 @@ router.patch(
 // upate
 router.put("/:id", jwtMiddleware, updateProduct);
 
+router.put(
+  "/update/product",
+  upload.single("logo"),
+  jwtMiddleware,
+  async (req, res) => {
+    try {
+      const fileName = req.file ? req.file.filename : null;
+
+      const { id, name, price, unitType } = req.body;
+
+      if (!id) {
+        return res.json({ message: "Product id is required", status: false });
+      }
+
+      const product = await Product.findByPk(id);
+
+      if (!product) {
+        return res.json({ message: "Product not found", status: false });
+      }
+
+      const updateData = {
+        name,
+        price,
+        unitType,
+      };
+
+      if (fileName) {
+        updateData.logo = fileName;
+      }
+
+      await Product.update(updateData, { where: { id } });
+
+      return res.json({
+        message: "Product updated successfully",
+        status: true,
+      });
+    } catch (error) {
+      return res.json({
+        message: "Something went wrong",
+        status: false,
+      });
+    }
+  }
+);
+
 router.get("/:id", jwtMiddleware, getById);
 
 router.delete("/:id", jwtMiddleware, deleteById);
