@@ -2,6 +2,7 @@ const fs = require("fs");
 const { ProductCategory } = require("../models/ProductCategory");
 const { Hsn } = require("../models/Hsn");
 const { Product } = require("../models/Product");
+const { User } = require("../models/User");
 
 const deleteUploadedFileSafely = (file) => {
   if (!file?.path && file?.filename) {
@@ -35,7 +36,6 @@ const create = async (req, res) => {
       description,
       price,
       stockQuantity,
-      productCategoryId,
     } = req.body;
 
     if (
@@ -43,23 +43,11 @@ const create = async (req, res) => {
       !hsnId ||
       !description ||
       !price ||
-      !stockQuantity ||
-      !productCategoryId
+      !stockQuantity
     ) {
       deleteUploadedFileSafely(req.file);
       return res.status(400).json({
         message: "All fields are required",
-        status: false,
-      });
-    }
-
-    const cat = await ProductCategory.findOne({
-      where: { id: productCategoryId },
-      attributes: ["id"],
-    });
-    if (!cat) {
-      return res.status(400).json({
-        message: "Invalid product category",
         status: false,
       });
     }
@@ -82,7 +70,6 @@ const create = async (req, res) => {
       description,
       price,
       stockQuantity,
-      productCategoryId,
       logo: req.file.filename,
       businessId: businessId,
       logo: req.file.filename,
@@ -98,9 +85,15 @@ const getAll = async (req, res) => {
   try {
     const user = req.user;
 
+    const business=await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    
+    const {businessId}=business?.dataValues || {};
+
     const products = await Product.findAll({
       where: {
-        businessId: user.businessId,
+        businessId: businessId,
       },
     });
     return res.json({ data: products, status: true });

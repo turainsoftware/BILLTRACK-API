@@ -20,14 +20,6 @@ const Product = sequilize.define(
         key: "id",
       },
     },
-    productCategoryId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: "ProductCategory",
-        key: "id",
-      },
-    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -82,11 +74,6 @@ const Product = sequilize.define(
 Product.belongsTo(Business, {
   foreignKey: "businessId",
   as: "business",
-});
-
-Product.belongsTo(ProductCategory, {
-  foreignKey: "productCategoryId",
-  as: "productCategory",
 });
 
 Product.belongsTo(ProductCategory, {
