@@ -79,7 +79,7 @@ const deleteUploadedFileSafely = (file) => {
 
 // router.post("/", jwtMiddleware, upload.single("logo"), create);
 
-router.post("/", jwtMiddleware, upload.single("logo"), async (req, res) => {
+router.post("/", upload.single("logo"),jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
     const business = await User.findByPk(user.id, {
