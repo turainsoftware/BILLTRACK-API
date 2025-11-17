@@ -79,7 +79,7 @@ const deleteUploadedFileSafely = (file) => {
 
 // router.post("/", jwtMiddleware, upload.single("logo"), create);
 
-router.post("/", upload.single("logo"),jwtMiddleware, async (req, res) => {
+router.post("/", upload.single("logo"), jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
     const business = await User.findByPk(user.id, {
@@ -118,9 +118,13 @@ router.post("/", upload.single("logo"),jwtMiddleware, async (req, res) => {
       product.logo = fileName;
     }
 
-    await product.save();
+    const createdProduct = await product.save();
 
-    return res.json({ message: "Product added successfully", status: true });
+    return res.json({
+      message: "Product added successfully",
+      status: true,
+      data: createdProduct,
+    });
   } catch (error) {
     return res.json({ error, message: "Something went wrong", status: false });
   }
@@ -202,11 +206,14 @@ router.put(
         updateData.logo = fileName;
       }
 
-      await Product.update(updateData, { where: { id } });
+      const updatedProduct = await Product.update(updateData, {
+        where: { id },
+      });
 
       return res.json({
         message: "Product updated successfully",
         status: true,
+        data: updatedProduct,
       });
     } catch (error) {
       return res.json({
