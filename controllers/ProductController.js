@@ -83,11 +83,16 @@ const getAll = async (req, res) => {
       where: {
         [Op.and]: [{ isActive: true }, { businessId: businessId }],
       },
+      include: [{
+        model: Hsn,
+        as: "hsn",
+        attributes: {exclude: ["isActive"]}
+      }]
     });
 
     return res.json({ data: products, status: true });
   } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
+    return res.json({ error, message: "Something went wrong", status: false });
   }
 };
 
