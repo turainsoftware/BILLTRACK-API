@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, fn, col, where } = require("sequelize");
 const { Hsn } = require("../models/Hsn");
 const { Parser } = require("json2csv");
 const ExcelJS = require("exceljs");
@@ -199,28 +199,29 @@ const getByHsnCode = async (req, res) => {
 
 const search = async (req, res) => {
   try {
-    const { query } = req.query;
+    let { query } = req.query;
+    if (!query) query = '';
+    query = query.toLowerCase();
 
     const data = await Hsn.findAll({
       where: {
-        [Op.or]: {
-          hsnCode: {
-            [Op.like]: `%${query}%`,
-          },
-          description: {
-            [Op.like]: `%${query}%`,
-          },
-        },
+        [Op.or]: [
+          where(fn('LOWER', col('hsnCode')), { [Op.like]: `%${query}%` }),
+          where(fn('LOWER', col('description')), { [Op.like]: `%${query}%` }),
+          where(fn('LOWER', col('cGst')), { [Op.like]: `%${query}%` }),
+          where(fn('LOWER', col('sGst')), { [Op.like]: `%${query}%` }),
+          where(fn('LOWER', col('iGst')), { [Op.like]: `%${query}%` }),
+        ],
       },
     });
 
-    return res.json({ data, status: true }).status(200);
+    return res.status(200).json({ data, status: true });
   } catch (error) {
-    return res
-      .json({ message: "Something went wrong", status: false })
-      .status(500);
+    console.error(error);
+    return res.status(500).json({ message: "Something went wrong", status: false });
   }
 };
+
 
 const count = async (req, res) => {
   try {

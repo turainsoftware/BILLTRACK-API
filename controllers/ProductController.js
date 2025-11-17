@@ -2,6 +2,8 @@ const fs = require("fs");
 const { ProductCategory } = require("../models/ProductCategory");
 const { Hsn } = require("../models/Hsn");
 const { Product } = require("../models/Product");
+const { User } = require("../models/User");
+const { Op } = require("sequelize");
 
 const deleteUploadedFileSafely = (file) => {
   if (!file?.path && file?.filename) {
@@ -28,38 +30,12 @@ const create = async (req, res) => {
     }
     const businessId = req.user.businessId;
 
-    const {
-      name,
-      hsnId,
-      sku,
-      description,
-      price,
-      stockQuantity,
-      productCategoryId,
-    } = req.body;
+    const { name, hsnId, sku, description, price, stockQuantity } = req.body;
 
-    if (
-      !name ||
-      !hsnId ||
-      !description ||
-      !price ||
-      !stockQuantity ||
-      !productCategoryId
-    ) {
+    if (!name || !hsnId || !description || !price || !stockQuantity) {
       deleteUploadedFileSafely(req.file);
       return res.status(400).json({
         message: "All fields are required",
-        status: false,
-      });
-    }
-
-    const cat = await ProductCategory.findOne({
-      where: { id: productCategoryId },
-      attributes: ["id"],
-    });
-    if (!cat) {
-      return res.status(400).json({
-        message: "Invalid product category",
         status: false,
       });
     }
@@ -82,7 +58,6 @@ const create = async (req, res) => {
       description,
       price,
       stockQuantity,
-      productCategoryId,
       logo: req.file.filename,
       businessId: businessId,
       logo: req.file.filename,
@@ -98,11 +73,18 @@ const getAll = async (req, res) => {
   try {
     const user = req.user;
 
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+
+    const { businessId } = business?.dataValues || {};
+
     const products = await Product.findAll({
       where: {
-        businessId: user.businessId,
+        [Op.and]: [{ isActive: true }, { businessId: businessId }],
       },
     });
+
     return res.json({ data: products, status: true });
   } catch (error) {
     return res.json({ message: "Something went wrong", status: false });
@@ -194,16 +176,20 @@ const getById = async (req, res) => {
   }
 };
 
-const deleteById=async (req, res) => {
+const deleteById = async (req, res) => {
   try {
     const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
     const product = await Product.findOne({
       where: { id: req.params.id },
     });
     if (!product) {
       return res.json({ message: "Product not found", status: false });
     }
-    if (user.businessId !== product.businessId) {
+    if (businessId !== product.businessId) {
       return res.json({ message: "You are not authorized", status: false });
     }
     await Product.update(
@@ -218,9 +204,9 @@ const deleteById=async (req, res) => {
   } catch (error) {
     return res.json({ message: "Something went wrong", status: false });
   }
-}
+};
 
-const updateHsn=async (req, res) => {
+const updateHsn = async (req, res) => {
   try {
     const user = req.user;
     const product = await Product.findOne({
@@ -244,6 +230,14 @@ const updateHsn=async (req, res) => {
   } catch (error) {
     return res.json({ message: "Something went wrong", status: false });
   }
-}
+};
 
-module.exports = { create, getAll, updateImage, updateProduct, getById,deleteById,updateHsn };
+module.exports = {
+  create,
+  getAll,
+  updateImage,
+  updateProduct,
+  getById,
+  deleteById,
+  updateHsn,
+};

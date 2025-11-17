@@ -20,6 +20,8 @@ const {
   deleteById,
   updateHsn,
 } = require("../controllers/ProductController");
+const { Business } = require("../models/Business");
+const { User } = require("../models/User");
 
 if (!fs.existsSync(PRODUCT_DIR)) {
   fs.mkdirSync(PRODUCT_DIR, { recursive: true });
@@ -75,11 +77,68 @@ const deleteUploadedFileSafely = (file) => {
   }
 };
 
-router.post("/", jwtMiddleware, upload.single("logo"), create);
+// router.post("/", jwtMiddleware, upload.single("logo"), create);
+
+router.post("/", upload.single("logo"), jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
+
+    const { name, hsnId, unitType, price } = req.body;
+
+    if (!name) {
+      return res.json({ message: "Product name is required", status: false });
+    } else if (!hsnId) {
+      return res.json({ message: "HSN is required", status: false });
+    } else if (!unitType) {
+      return res.json({ message: "Unit type is required", status: false });
+    } else if (!price) {
+      return res.json({ message: "Price is required", status: false });
+    }
+
+    const existHsn = await Hsn.findOne({ where: { id: hsnId } });
+    if (!existHsn) {
+      return res.json({ message: "Invalid HSN", status: false });
+    }
+
+    const fileName = req.file ? req.file.filename : null;
+
+    const product = await Product.create({
+      name,
+      hsnId,
+      unitType,
+      price,
+      businessId,
+    });
+
+    if (fileName) {
+      product.logo = fileName;
+    }
+
+    const createdProduct = await product.save();
+
+    return res.json({
+      message: "Product added successfully",
+      status: true,
+      data: createdProduct,
+    });
+  } catch (error) {
+    return res.json({ error, message: "Something went wrong", status: false });
+  }
+});
 
 router.post("/bulk", jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
+    console.log("businessId", businessId);
+
     const { products } = req.body;
 
     if (!Array.isArray(products)) {
@@ -90,23 +149,18 @@ router.post("/bulk", jwtMiddleware, async (req, res) => {
     let unSavedData = 0;
 
     products.forEach((item) => {
-      if (
-        !item.name ||
-        !item.productCategoryId ||
-        !item.hsnId ||
-        !item.unitType
-      ) {
+      if (!item.name || !item.hsnId || !item.unitType) {
         unSavedData += 1;
         return;
       }
-      finalSaveData.push({ ...item, businessId: user.businessId });
+      finalSaveData.push({ ...item, businessId: businessId });
     });
 
     await Product.bulkCreate(finalSaveData);
 
     return res.json({ message: "Product added successfully", status: true });
   } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
+    return res.json({ error, message: "Something went wrong", status: false });
   }
 });
 
@@ -121,6 +175,54 @@ router.patch(
 
 // upate
 router.put("/:id", jwtMiddleware, updateProduct);
+
+router.put(
+  "/update/product",
+  upload.single("logo"),
+  jwtMiddleware,
+  async (req, res) => {
+    try {
+      const fileName = req.file ? req.file.filename : null;
+
+      const { id, name, price, unitType } = req.body;
+
+      if (!id) {
+        return res.json({ message: "Product id is required", status: false });
+      }
+
+      const product = await Product.findByPk(id);
+
+      if (!product) {
+        return res.json({ message: "Product not found", status: false });
+      }
+
+      const updateData = {
+        name,
+        price,
+        unitType,
+      };
+
+      if (fileName) {
+        updateData.logo = fileName;
+      }
+
+      await Product.update(updateData, {
+        where: { id },
+      });
+      const updatedProduct = await Product.findByPk(id);
+      return res.json({
+        message: "Product updated successfully",
+        status: true,
+        data: updatedProduct,
+      });
+    } catch (error) {
+      return res.json({
+        message: "Something went wrong",
+        status: false,
+      });
+    }
+  }
+);
 
 router.get("/:id", jwtMiddleware, getById);
 

@@ -4,11 +4,12 @@ const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
 const { Business } = require("../models/Business");
 const { BusinessCategory } = require("../models/BusinessCategory");
 const { ProductCategory } = require("../models/ProductCategory");
-const { Op } = require("sequelize");
+const { Op, where } = require("sequelize");
 const { ProductSuggesion } = require("./../models/ProductSuggestion.js");
 const router = express.Router();
+const { User } = require("./../models/User.js");
 
-router.post("/bulk", async(req, res) => {
+router.post("/bulk", async (req, res) => {
   try {
     const { data = [] } = req.body;
     if (!data || !Array.isArray(data) || !data.length > 0) {
@@ -26,7 +27,7 @@ router.post("/bulk", async(req, res) => {
           productCategoryId: item.productCategoryId,
           hsnId: item.hsnId,
           unitType: item.unitType,
-          logo: "logo"
+          logo: "logo",
         };
       } else {
         rejectedObject.push(item);
@@ -43,14 +44,20 @@ router.post("/bulk", async(req, res) => {
       status: true,
     });
   } catch (error) {
-    return res.json({ message: "Something went wrong",error, status: false });
+    return res.json({ message: "Something went wrong", error, status: false });
   }
 });
 
 // GET ALL THE PRODUCTS
 router.get("/", jwtMiddleware, async (req, res) => {
   try {
-    const { businessId } = req.user;
+    const user = req.user;
+    console.log(user);
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+
+    const { businessId } = business?.dataValues || {};
 
     // Fetch business data
     const businessData = await Business.findByPk(businessId, {
