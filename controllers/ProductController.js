@@ -83,11 +83,27 @@ const getAll = async (req, res) => {
       where: {
         [Op.and]: [{ isActive: true }, { businessId: businessId }],
       },
+      attributes: [
+        "id",
+        "name",
+        "description",
+        "hsnId",
+        "price",
+        "unitType",
+        "logo"
+      ],
+      include: [
+        {
+          model: Hsn,
+          as: "hsn",
+          attributes: { exclude: ["isActive"] },
+        },
+      ],
     });
 
     return res.json({ data: products, status: true });
   } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
+    return res.json({ error, message: "Something went wrong", status: false });
   }
 };
 
@@ -161,13 +177,31 @@ const updateProduct = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
     const product = await Product.findOne({
       where: { id: req.params.id },
+      attributes: [
+        "id",
+        "name",
+        "description",
+        "hsnId",
+        "price",
+        "unitType",
+        "logo",
+      ],
+      include: {
+        model: Hsn,
+        as: "hsn",
+        attributes: { exclude: ["isActive"] },
+      },
     });
     if (!product) {
       return res.json({ message: "Product not found", status: false });
     }
-    if (user.businessId !== product.businessId) {
+    if (businessId !== product.businessId) {
       return res.json({ message: "You are not authorized", status: false });
     }
     return res.json({ data: product, status: true });

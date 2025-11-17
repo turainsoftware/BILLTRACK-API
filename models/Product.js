@@ -3,6 +3,7 @@ const { DataTypes } = require("sequelize");
 const { sequilize } = require("../config/db");
 const { Business } = require("./Business");
 const { ProductCategory } = require("./ProductCategory");
+const { Hsn } = require("./Hsn");
 
 const Product = sequilize.define(
   "Product",
@@ -76,7 +77,7 @@ Product.belongsTo(Business, {
   as: "business",
 });
 
-Product.belongsTo(ProductCategory, {
+Product.belongsTo(Hsn, {
   foreignKey: "hsnId",
   as: "hsn",
 });
