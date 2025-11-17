@@ -206,10 +206,10 @@ router.put(
         updateData.logo = fileName;
       }
 
-      const updatedProduct = await Product.update(updateData, {
+      await Product.update(updateData, {
         where: { id },
       });
-
+      const updatedProduct = await Product.findByPk(id);
       return res.json({
         message: "Product updated successfully",
         status: true,
