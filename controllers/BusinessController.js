@@ -65,16 +65,19 @@ const addBusiness = async (req, res) => {
       });
     }
 
-    if (!gstNumber || typeof gstNumber !== "string" || !gstNumber.trim()) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "GST number is required",
-        status: false,
-      });
+    // GST is optional — validate only if provided
+    if (gstNumber !== undefined && gstNumber !== null && gstNumber !== "") {
+      if (typeof gstNumber !== "string" || !gstNumber.trim()) {
+        deleteUploadedFileSafely(req.file);
+        return res.status(400).json({
+          message: "Invalid GST number",
+          status: false,
+        });
+      }
     }
 
     // Normalize inputs
-    const normalizedGst = gstNumber.trim().toUpperCase();
+    const normalizedGst = gstNumber && gstNumber.trim().toUpperCase();
     const normalizedName = String(name).trim();
     const normalizedEmail = typeof email === "string" ? email.trim() : email;
     const normalizedPhone = typeof phone === "string" ? phone.trim() : phone;
@@ -92,15 +95,20 @@ const addBusiness = async (req, res) => {
     }
 
     // Uniqueness check (GST)
-    const existingBusiness = await Business.findOne({
-      where: { gstNumber: normalizedGst },
-    });
-    if (existingBusiness) {
-      deleteUploadedFileSafely(req.file);
-      return res.status(400).json({
-        message: "GST number already exists",
-        status: false,
+    let existingBusiness = null;
+
+    if (normalizedGst) {
+      existingBusiness = await Business.findOne({
+        where: { gstNumber: normalizedGst },
       });
+
+      if (existingBusiness) {
+        deleteUploadedFileSafely(req.file);
+        return res.status(400).json({
+          message: "GST number already exists",
+          status: false,
+        });
+      }
     }
 
     // Persist business
