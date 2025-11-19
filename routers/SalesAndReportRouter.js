@@ -99,7 +99,7 @@ const getMonthLabels = (startDate, count) => {
 };
 
 const getDayLabels = (period, startDate) => {
-  const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   switch (period.toLowerCase()) {
     case "today":
@@ -232,7 +232,7 @@ router.get("/sales", jwtMiddleware, async (req, res) => {
     // Validate businessId
     if (!businessId || isNaN(businessId)) {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: "Invalid Business",
       });
     }
@@ -243,7 +243,7 @@ router.get("/sales", jwtMiddleware, async (req, res) => {
       )
     ) {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: "Invalid period",
       });
     }
@@ -301,13 +301,13 @@ router.get("/sales", jwtMiddleware, async (req, res) => {
     };
 
     res.status(200).json({
-      success: true,
+      status: true,
       data: response,
     });
   } catch (error) {
     console.error("Error generating sales report:", error);
     res.status(500).json({
-      success: false,
+      status: false,
       message: error.message || "Error generating sales report",
     });
   }
