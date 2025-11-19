@@ -3,13 +3,17 @@ const { Invoice } = require("../models/Invoice");
 const { InvoiceItems } = require("../models/InvoiceItems");
 const { transform } = require("pdfkit");
 const router = express.Router();
+const { User } = require("./../models/User");
+const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
 
-router.post("/", async (req, res) => {
+router.post("/", jwtMiddleware, async (req, res) => {
   let transaction;
   try {
-    const { userId, status, items = [] } = req.body;
+    const user = req.user;
+
+    const { status, customerNumber = "", items = [] } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
-    if (!userId || !allowedStatus.includes(status)) {
+    if (!allowedStatus.includes(status)) {
       return res.status(400).json({
         message: "Invalid data format",
         status: false,
@@ -24,14 +28,11 @@ router.post("/", async (req, res) => {
     }
 
     let totalAmount = 0;
-    let gst = 0;
-
-    let gstPercentage = 0;
 
     items.forEach((item) => {
       if (
         !item.quantity ||
-        !item.productId ||
+        !item.productName ||
         !item.rate ||
         !item.gstType ||
         !item.gstPercentage
@@ -40,20 +41,26 @@ router.post("/", async (req, res) => {
           .status(400)
           .json({ message: "Invalid data format", status: false });
       }
-      gstPercentage = Number(item.gstPercentage);
-      gst = gst + (item.rate * item.quantity * gstPercentage) / 100;
-      totalAmount = totalAmount + item.rate * item.quantity;
+      totalAmount =
+        totalAmount + new Number(item.rate) * new Number(item.quantity);
     });
 
     console.info(totalAmount);
+
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
 
     transaction = await Invoice.sequelize.transaction();
 
     const invoice = await Invoice.create(
       {
-        userId,
-        totalAmount: totalAmount + gst,
+        userId: user?.id,
+        businessId: businessId,
+        totalAmount: totalAmount,
         status: "paid",
+        customerNumber,
       },
       { transaction }
     );
@@ -61,7 +68,7 @@ router.post("/", async (req, res) => {
     await InvoiceItems.bulkCreate(
       items.map((item) => ({
         invoiceId: invoice.id,
-        productId: item.productId,
+        productName: item.productName,
         quantity: item.quantity,
         rate: item.rate,
         gstType: item.gstType,

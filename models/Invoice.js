@@ -26,6 +26,11 @@ const Invoice = sequilize.define(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    customerNumber: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     status: {
       type: DataTypes.ENUM("paid", "unpaid", "canceled"),
       allowNull: false,

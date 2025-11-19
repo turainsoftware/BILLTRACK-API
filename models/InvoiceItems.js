@@ -18,8 +18,8 @@ const InvoiceItems = sequilize.define(
         key: "id",
       },
     },
-    productId: {
-      type: DataTypes.INTEGER,
+    productName: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
     quantity: {
@@ -32,10 +32,11 @@ const InvoiceItems = sequilize.define(
     },
     gstType: {
       type: DataTypes.ENUM("cgst/sgst", "igst"),
+      allowNull: true,
     },
     gstPercentage: {
       type: DataTypes.DECIMAL(5, 2),
-      allowNull: false,
+      allowNull: true,
     },
   },
   {
