@@ -5,6 +5,7 @@ const { transform } = require("pdfkit");
 const router = express.Router();
 const { User } = require("./../models/User");
 const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
+const { generateInvoiceNumber } = require("../utils/helper");
 
 router.post("/", jwtMiddleware, async (req, res) => {
   let transaction;
@@ -54,8 +55,11 @@ router.post("/", jwtMiddleware, async (req, res) => {
 
     transaction = await Invoice.sequelize.transaction();
 
+    const invoiceNumber = generateInvoiceNumber(businessId);
+
     const invoice = await Invoice.create(
       {
+        invoiceNumber: invoiceNumber,
         userId: user?.id,
         businessId: businessId,
         totalAmount: totalAmount,
@@ -88,13 +92,50 @@ router.post("/", jwtMiddleware, async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", jwtMiddleware, async (req, res) => {
   try {
-    const data = await Invoice.findAll();
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
 
-    return res.json({ data, status: true }).status(200);
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+
+    const offset = page * limit;
+
+    const total = await Invoice.count({
+      where: {
+        businessId: businessId,
+      },
+    });
+
+    const data = await Invoice.findAll({
+      where: {
+        businessId: businessId,
+      },
+      attributes: { exclude: ["userId", "businessId", "updatedAt"] },
+      offset: offset,
+      limit: limit,
+      order: [["createdAt", "DESC"]],
+    });
+
+    const totalPage = Math.ceil(total / limit);
+    const isLastPage = page === totalPage - 1;
+
+    return res
+      .json({
+        data,
+        pagination: {
+          totalPage,
+          hasNext: !isLastPage,
+        },
+        status: true,
+      })
+      .status(200);
   } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
+    return res.json({ error, message: "Something went wrong", status: false });
   }
 });
 
