@@ -140,6 +140,13 @@ router.get("/", jwtMiddleware, async (req, res) => {
   }
 });
 
+router.get("/invoice-details/:id", async (req, res) => {
+  try {
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false });
+  }
+});
+
 router.get("/items/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -151,6 +158,14 @@ router.get("/items/:id", async (req, res) => {
       where: {
         invoiceId: id,
       },
+      attributes: [
+        "id",
+        "productName",
+        "quantity",
+        "rate",
+        "gstType",
+        "gstPercentage",
+      ],
     });
     return res.json({ items, status: true }).status(200);
   } catch (error) {
