@@ -91,17 +91,17 @@ router.post("/", upload.single("logo"), jwtMiddleware, async (req, res) => {
 
     if (!name) {
       return res.json({ message: "Product name is required", status: false });
-    } else if (!hsnId) {
-      return res.json({ message: "HSN is required", status: false });
     } else if (!unitType) {
       return res.json({ message: "Unit type is required", status: false });
     } else if (!price) {
       return res.json({ message: "Price is required", status: false });
     }
 
-    const existHsn = await Hsn.findOne({ where: { id: hsnId } });
-    if (!existHsn) {
-      return res.json({ message: "Invalid HSN", status: false });
+    if (hsnId) {
+      const existHsn = await Hsn.findOne({ where: { id: hsnId } });
+      if (!existHsn) {
+        return res.json({ message: "Invalid HSN", status: false });
+      }
     }
 
     const fileName = req.file ? req.file.filename : null;
@@ -137,7 +137,6 @@ router.post("/bulk", jwtMiddleware, async (req, res) => {
       attributes: ["businessId"],
     });
     const { businessId } = business?.dataValues || {};
-    console.log("businessId", businessId);
 
     const { products } = req.body;
 
@@ -149,7 +148,7 @@ router.post("/bulk", jwtMiddleware, async (req, res) => {
     let unSavedData = 0;
 
     products.forEach((item) => {
-      if (!item.name || !item.hsnId || !item.unitType) {
+      if (!item.name || !item.unitType) {
         unSavedData += 1;
         return;
       }

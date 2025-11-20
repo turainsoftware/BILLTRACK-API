@@ -3,13 +3,18 @@ const { Invoice } = require("../models/Invoice");
 const { InvoiceItems } = require("../models/InvoiceItems");
 const { transform } = require("pdfkit");
 const router = express.Router();
+const { User } = require("./../models/User");
+const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
+const { generateInvoiceNumber } = require("../utils/helper");
 
-router.post("/", async (req, res) => {
+router.post("/", jwtMiddleware, async (req, res) => {
   let transaction;
   try {
-    const { userId, status, items = [] } = req.body;
+    const user = req.user;
+
+    const { status, customerNumber = "", items = [] } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
-    if (!userId || !allowedStatus.includes(status)) {
+    if (!allowedStatus.includes(status)) {
       return res.status(400).json({
         message: "Invalid data format",
         status: false,
@@ -24,36 +29,36 @@ router.post("/", async (req, res) => {
     }
 
     let totalAmount = 0;
-    let gst = 0;
-
-    let gstPercentage = 0;
 
     items.forEach((item) => {
-      if (
-        !item.quantity ||
-        !item.productId ||
-        !item.rate ||
-        !item.gstType ||
-        !item.gstPercentage
-      ) {
+      if (!item.quantity || !item.productName || !item.rate) {
         return res
           .status(400)
           .json({ message: "Invalid data format", status: false });
       }
-      gstPercentage = Number(item.gstPercentage);
-      gst = gst + (item.rate * item.quantity * gstPercentage) / 100;
-      totalAmount = totalAmount + item.rate * item.quantity;
+      totalAmount =
+        totalAmount + new Number(item.rate) * new Number(item.quantity);
     });
 
     console.info(totalAmount);
 
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
+
     transaction = await Invoice.sequelize.transaction();
+
+    const invoiceNumber = generateInvoiceNumber(businessId);
 
     const invoice = await Invoice.create(
       {
-        userId,
-        totalAmount: totalAmount + gst,
+        invoiceNumber: invoiceNumber,
+        userId: user?.id,
+        businessId: businessId,
+        totalAmount: totalAmount,
         status: "paid",
+        customerNumber,
       },
       { transaction }
     );
@@ -61,11 +66,11 @@ router.post("/", async (req, res) => {
     await InvoiceItems.bulkCreate(
       items.map((item) => ({
         invoiceId: invoice.id,
-        productId: item.productId,
+        productName: item.productName,
         quantity: item.quantity,
         rate: item.rate,
-        gstType: item.gstType,
-        gstPercentage: item.gstPercentage,
+        gstType: item.gstType || null,
+        gstPercentage: item.gstPercentage || null,
       })),
       { transaction }
     );
@@ -76,18 +81,62 @@ router.post("/", async (req, res) => {
       .status(201)
       .json({ message: "Invoice created successfully", status: true });
   } catch (error) {
-    transaction.rollback();
-    return res.json({ message: "Something went wrong", status: false, error });
+    if (transaction) {
+      await transaction.rollback();
+    }
+    return res.json({
+      error,
+      message: "Something went wrong",
+      status: false,
+      error,
+    });
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", jwtMiddleware, async (req, res) => {
   try {
-    const data = await Invoice.findAll();
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
 
-    return res.json({ data, status: true }).status(200);
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 0;
+
+    const offset = page * limit;
+
+    const total = await Invoice.count({
+      where: {
+        businessId: businessId,
+      },
+    });
+
+    const data = await Invoice.findAll({
+      where: {
+        businessId: businessId,
+      },
+      attributes: { exclude: ["userId", "businessId", "updatedAt"] },
+      offset: offset,
+      limit: limit,
+      order: [["createdAt", "DESC"]],
+    });
+
+    const totalPage = Math.ceil(total / limit);
+    const isLastPage = page === totalPage - 1;
+
+    return res
+      .json({
+        data,
+        pagination: {
+          totalPage,
+          hasNext: !isLastPage,
+        },
+        status: true,
+      })
+      .status(200);
   } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
+    return res.json({ error, message: "Something went wrong", status: false });
   }
 });
 
