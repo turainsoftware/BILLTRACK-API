@@ -31,13 +31,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
     let totalAmount = 0;
 
     items.forEach((item) => {
-      if (
-        !item.quantity ||
-        !item.productName ||
-        !item.rate ||
-        !item.gstType ||
-        !item.gstPercentage
-      ) {
+      if (!item.quantity || !item.productName || !item.rate) {
         return res
           .status(400)
           .json({ message: "Invalid data format", status: false });
@@ -75,8 +69,8 @@ router.post("/", jwtMiddleware, async (req, res) => {
         productName: item.productName,
         quantity: item.quantity,
         rate: item.rate,
-        gstType: item.gstType,
-        gstPercentage: item.gstPercentage,
+        gstType: item.gstType || null,
+        gstPercentage: item.gstPercentage || null,
       })),
       { transaction }
     );
@@ -87,8 +81,15 @@ router.post("/", jwtMiddleware, async (req, res) => {
       .status(201)
       .json({ message: "Invoice created successfully", status: true });
   } catch (error) {
-    transaction.rollback();
-    return res.json({ message: "Something went wrong", status: false, error });
+    if (transaction) {
+      await transaction.rollback();
+    }
+    return res.json({
+      error,
+      message: "Something went wrong",
+      status: false,
+      error,
+    });
   }
 });
 
