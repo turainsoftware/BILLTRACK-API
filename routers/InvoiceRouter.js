@@ -140,13 +140,6 @@ router.get("/", jwtMiddleware, async (req, res) => {
   }
 });
 
-router.get("/invoice-details/:id", async (req, res) => {
-  try {
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
-  }
-});
-
 router.get("/items/:id", async (req, res) => {
   try {
     const { id } = req.params;
