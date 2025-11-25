@@ -7,11 +7,18 @@ const {
   DB_PORT,
   DB_DIALECT,
 } = require("./config");
+const { date } = require("joi");
 
 const sequilize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   host: DB_HOST,
   port: DB_PORT,
   dialect: DB_DIALECT,
+  timezone: "+05:30",
+  dialectOptions: {
+    useUTC: false,
+    dateStrings: true,
+    typeCast: true,
+  },
 });
 
 const connectDB = async () => {
