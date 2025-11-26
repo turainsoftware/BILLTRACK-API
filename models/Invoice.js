@@ -41,6 +41,11 @@ const Invoice = sequilize.define(
       allowNull: false,
       defaultValue: "unpaid",
     },
+    paymentMode: {
+      type: DataTypes.ENUM("cash", "card", "upi"),
+      allowNull: true,
+      defaultValue: "cash",
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

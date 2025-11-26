@@ -12,9 +12,16 @@ router.post("/", jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
 
-    const { status, customerNumber = "", items = [] } = req.body;
+    const { status, customerNumber = "", items = [], paymentMode } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
     if (!allowedStatus.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid data format",
+        status: false,
+      });
+    }
+
+    if (!["cash", "upi", "card"].includes(paymentMode)) {
       return res.status(400).json({
         message: "Invalid data format",
         status: false,
@@ -58,6 +65,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
         businessId: businessId,
         totalAmount: totalAmount,
         status: "paid",
+        paymentMode: paymentMode,
         customerNumber,
       },
       { transaction }
@@ -137,13 +145,6 @@ router.get("/", jwtMiddleware, async (req, res) => {
       .status(200);
   } catch (error) {
     return res.json({ error, message: "Something went wrong", status: false });
-  }
-});
-
-router.get("/invoice-details/:id", async (req, res) => {
-  try {
-  } catch (error) {
-    return res.json({ message: "Something went wrong", status: false });
   }
 });
 
