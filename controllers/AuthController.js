@@ -2,6 +2,7 @@ const Joi = require("joi");
 const { User } = require("../models/User");
 const { generateToken } = require("../config/JwtConfig");
 const { default: axios } = require("axios");
+const { Device } = require("../models/Devices");
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -102,13 +103,10 @@ const loginWithPhone = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   try {
-    const { error } = verifySchema.validate(req.body);
-    if (error)
-      return res
-        .status(400)
-        .json({ message: error.details[0].message, status: false });
-
     const { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.json({ message: "Phone and OTP are required", status: false });
+    }
     const user = await User.findOne({ where: { phone } });
 
     if (!user)
@@ -118,6 +116,28 @@ const verifyOTP = async (req, res) => {
 
     if (user.otpExpiry < new Date())
       return res.status(400).json({ message: "OTP expired", status: false });
+
+    if (user?.businessId) {
+      const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
+        req.body;
+      const businessIddd = user?.businessId;
+      console.log("business Id ", businessIddd);
+      const count = await Device.count({ where: { businessId: businessIddd } });
+      if (count >= 1) {
+        return res.status(400).json({
+          message: "Already Logged In in different devices",
+          status: false,
+        });
+      }
+      await Device.create({
+        fcmToken: fcmToken,
+        deviceType: deviceType,
+        deviceModel: deviceModel,
+        deviceName: deviceName,
+        deviceUniqueKey: deviceUniqueKey,
+        businessId: businessIddd,
+      });
+    }
 
     const token = generateToken(user);
 

@@ -119,7 +119,7 @@ const getDayLabels = (period, startDate) => {
 
     case "month":
       // Show weekly data (4 weeks + extra days)
-      return ["W1", "W2", "W3", "W4", "W5"];
+      return ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
 
     case "3months":
       // Show actual month names
