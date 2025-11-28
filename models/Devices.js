@@ -32,7 +32,7 @@ const Device = sequilize.define("Device", {
   },
   businessId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: "Business",
       key: "id",
