@@ -14,7 +14,7 @@ const Device = sequilize.define("Device", {
     allowNull: false,
   },
   deviceType: {
-    type: DataTypes.ENUM("android", "ios"),
+    type: DataTypes.STRING,
     allowNull: false,
   },
   deviceModel: {
@@ -32,7 +32,7 @@ const Device = sequilize.define("Device", {
   },
   businessId: {
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
     references: {
       model: "Business",
       key: "id",
