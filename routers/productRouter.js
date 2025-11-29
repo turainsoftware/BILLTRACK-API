@@ -165,6 +165,23 @@ router.post("/bulk", jwtMiddleware, async (req, res) => {
 
 router.get("/all", jwtMiddleware, getAll);
 
+router.get("/all-active-inactive", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const businessId = business?.dataValues?.businessId;
+    const products = await Product.findAll({ where: { businessId } });
+    return res.json({
+      status: true,
+      data: products,
+    });
+  } catch (error) {
+    return res.json({ error, message: "Something went wrong", status: false });
+  }
+});
+
 router.patch(
   "/update-image/:id",
   jwtMiddleware,
