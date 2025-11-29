@@ -172,7 +172,10 @@ router.get("/all-active-inactive", jwtMiddleware, async (req, res) => {
       attributes: ["businessId"],
     });
     const businessId = business?.dataValues?.businessId;
-    const products = await Product.findAll({ where: { businessId } });
+    const products = await Product.findAll({
+      where: { businessId },
+      order: [["isActive", "DESC"]],
+    });
     return res.json({
       status: true,
       data: products,
@@ -188,6 +191,32 @@ router.patch(
   upload.single("logo"),
   updateImage
 );
+
+// Update MULTIPLE PRODUCTS
+router.put("/update-products-status", async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!Array.isArray(products)) {
+      return res.json({ message: "Invalid data format", status: false });
+    }
+    if (products.length === 0) {
+      return res.json({ message: "No products found", status: false });
+    }
+
+    await Promise.all(
+      products.map((item) => {
+        Product.update({ isActive: item.isActive }, { where: { id: item.id } });
+      })
+    );
+
+    return res.json({
+      message: "Products updated successfully",
+      status: true,
+    });
+  } catch (error) {
+    return res.json({ error, message: "Something went wrong", status: false });
+  }
+});
 
 // upate
 router.put("/:id", jwtMiddleware, updateProduct);
