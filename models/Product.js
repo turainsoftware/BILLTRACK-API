@@ -20,6 +20,8 @@ const Product = sequilize.define(
         model: "Business",
         key: "id",
       },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     name: {
       type: DataTypes.STRING,
