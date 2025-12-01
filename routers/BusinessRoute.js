@@ -86,6 +86,63 @@ router.post("/", jwtMiddleware, upload.single("logo"), addBusiness);
 // GET BUSINESS DETAILS BY USER
 router.get("/", jwtMiddleware, getBusiness);
 
+router.put("/update", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const userBusiness = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    if (!userBusiness) {
+      return res.status(404).json({
+        success: false,
+        message: "Invalid business Details",
+      });
+    }
+    const { businessId } = userBusiness.dataValues;
+
+    const { gstNumber, street, city, state, pinCode, email, phone } = req.body;
+
+    const payload = {};
+    if (gstNumber) {
+      payload.gstNumber = gstNumber;
+    }
+    if (street) {
+      payload.street = street;
+    }
+    if (city) {
+      payload.city = city;
+    }
+    if (state) {
+      payload.state = state;
+    }
+    if (pinCode) {
+      payload.pinCode = pinCode;
+    }
+    if (email) {
+      payload.email = email;
+    }
+    if (phone) {
+      payload.phone = phone;
+    }
+
+    await Business.update(payload, {
+      where: { id: businessId },
+    });
+    const updatedBusiness = await Business.findByPk(businessId);
+    return res.json({
+      status: true,
+      message: "Business updated successfully",
+      business: updatedBusiness,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      status: false,
+      message: "Something went wrong",
+    });
+  }
+});
+
 // update address
 router.put("/address", jwtMiddleware, updateAddress);
 

@@ -16,26 +16,6 @@ const loginSchema = Joi.object({
     }),
 });
 
-const verifySchema = Joi.object({
-  phone: Joi.string()
-    .pattern(/^[0-9]{10}$/)
-    .required()
-    .messages({
-      "string.pattern.base": "Phone number must be exactly 10 digits.",
-      "string.empty": "Phone number is required.",
-      "any.required": "Phone number is required.",
-    }),
-  otp: Joi.string()
-    .length(4)
-    .pattern(/^[0-9]{4}$/)
-    .required()
-    .messages({
-      "string.length": "OTP must be exactly 4 digits.",
-      "string.empty": "OTP is required.",
-      "any.required": "OTP is required.",
-      "string.pattern.base": "OTP must contain only digits.",
-    }),
-});
 
 const loginWithPhone = async (req, res) => {
   try {
