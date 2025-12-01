@@ -80,8 +80,6 @@ const Business = sequilize.define(
 Business.belongsTo(BusinessCategory, {
   foreignKey: "businessCategoryId",
   as: "category",
-  onDelete: "CASCADE",
-  onUpdate: "CASCADE",
 });
 
 module.exports = { Business };
