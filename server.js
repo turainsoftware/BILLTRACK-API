@@ -11,6 +11,7 @@ const AuthRoutes = require("./routers/AuthRoutes.js");
 const ProductSuggesionRouter = require("./routers/ProductSuggestionRoute.js");
 const SalesAndReportRouter = require("./routers/SalesAndReportRouter.js");
 const DeviceRouter = require("./routers/DeviceRoutes.js");
+const NotificationRouter = require("./routers/NotificationRouter.js");
 
 const logger = require("./middleware/Logger.js");
 
@@ -48,6 +49,7 @@ app.use("/api/v1/user", logger, UserRouter);
 app.use("/api/v1/business", logger, BusinessRouter);
 app.use("/api/v1/sales-report", logger, SalesAndReportRouter);
 app.use("/api/v1/device", logger, DeviceRouter);
+app.use("/api/v1/notification", logger, NotificationRouter);
 
 // file routes
 app.use("/api/v1/files/logo", express.static(LOGO_DIR));

@@ -3,6 +3,7 @@ const { User } = require("../models/User");
 const { generateToken } = require("../config/JwtConfig");
 const { default: axios } = require("axios");
 const { Device } = require("../models/Devices");
+const { API_KEY, OTP_TEMPLATE_ID, CODING, CALLBACK_DATA, SENDER_ID } = require("../config/sms.config");
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -15,7 +16,6 @@ const loginSchema = Joi.object({
       "string.empty": "Phone number is required.",
     }),
 });
-
 
 const loginWithPhone = async (req, res) => {
   try {
@@ -47,13 +47,13 @@ const loginWithPhone = async (req, res) => {
     }
 
     const data = {
-      api_key: "ffc98cf3cf74d71941a9f5aefeb021af",
+      api_key: API_KEY,
       msg: `${otp} is your one time password (OTP). Please do not share the OTP with others. Team BillTrack.`,
-      senderid: "BLTRAK",
-      templateID: "1707173287654318591",
-      coding: "1",
+      senderid: SENDER_ID,
+      templateID: OTP_TEMPLATE_ID,
+      coding: CODING,
       to: phone,
-      callbackData: "cb",
+      callbackData: CALLBACK_DATA,
     };
 
     const response = await axios.post(
