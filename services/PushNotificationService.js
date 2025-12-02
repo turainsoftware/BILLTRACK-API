@@ -34,11 +34,11 @@ class PushNotificationService {
           notification: {
             title,
             body,
-            imageUrl,
+            image: imageUrl,
           },
           android: {
             notification: {
-              imageUrl,
+              image: imageUrl,
             },
           },
           apns: {

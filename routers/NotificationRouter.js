@@ -37,4 +37,36 @@ router.post("/sent-app-notification", jwtMiddleware, async (req, res) => {
   }
 });
 
+router.post("/sent-app-notification-with-image",jwtMiddleware,async(req,res)=>{
+    try {
+      const user = req.user;
+      const userBusiness = await User.findByPk(user.id, {
+        attributes: ["businessId"],
+      });
+
+      const { title, body,imageUrl } = req.body;
+
+      const { businessId } = userBusiness.dataValues;
+      const devices = await Device.findAll({
+        where: { businessId: businessId },
+        attributes: ["fcmToken"],
+      });
+
+      devices.map((device) => {
+        const { fcmToken } = device;
+        PushNotificationService.sendNotificationWithImage(fcmToken, title,body,imageUrl);
+      });
+
+      return res.json({
+        success: true,
+        message: "User fetched successfully",
+      });
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: error.message,
+          });      
+    }
+})
+
 module.exports = router;
