@@ -3,6 +3,7 @@ const multer = require("multer");
 const { BusinessCategory } = require("../models/BusinessCategory");
 const { Business } = require("../models/Business");
 const { User } = require("../models/User");
+const { Device } = require("../models/Devices");
 
 function deleteUploadedFileSafely(file) {
   if (!file?.path && file?.filename) {
@@ -129,6 +130,19 @@ const addBusiness = async (req, res) => {
       { businessId: newBusiness.id },
       { where: { id: userId } }
     );
+
+    if (newBusiness?.id) {
+      const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
+        req.body;
+      await Device.create({
+        fcmToken,
+        deviceType,
+        deviceModel,
+        deviceName,
+        deviceUniqueKey,
+        businessId: newBusiness.id,
+      });
+    }
 
     return res.status(201).json({
       message: "Business created successfully",
