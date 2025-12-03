@@ -2,7 +2,7 @@ const express = require("express");
 const { Device } = require("../models/Devices");
 const router = express.Router();
 
-router.get("/device-check/:uniqueKey", async (req, res) => {
+router.post("/device-check/:uniqueKey", async (req, res) => {
   try {
     const { uniqueKey } = req.params;
     const data = await Device.findOne({
