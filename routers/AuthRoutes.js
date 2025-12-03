@@ -2,6 +2,8 @@ const express = require("express");
 const { verifyOTP, loginWithPhone } = require("../controllers/AuthController");
 const { User } = require("../models/User");
 const { generateToken } = require("../config/JwtConfig");
+const { Device } = require("../models/Devices");
+const { Business } = require("../models/Business");
 const router = express.Router();
 
 router.post("/login", loginWithPhone);
@@ -24,5 +26,52 @@ router.post("/login-with-gogole", async (req, res) => {
   }
 });
 router.post("/verify", verifyOTP);
+
+router.post("/remove-device-login", async (req, res) => {
+  try {
+    const {
+      fcmToken,
+      deviceType,
+      deviceModel,
+      deviceName,
+      deviceUniqueKey,
+      phone,
+    } = req.body;
+    const user = await User.findOne({ where: { phone } });
+    if (!user)
+      return res.status(404).json({ message: "User not found", status: false });
+
+    const { businessId } = user.dataValues;
+
+    await Device.destroy({
+      where: {
+        businessId: businessId,
+      },
+    });
+
+    await Device.create({
+      fcmToken,
+      deviceType,
+      deviceModel,
+      deviceName,
+      deviceUniqueKey,
+      businessId,
+    });
+
+    const business = await Business.findByPk(businessId);
+
+    const token = generateToken(user);
+
+    return res.json({
+      message: "Login successful",
+      status: true,
+      token,
+      business,
+      user,
+    });
+  } catch (error) {
+    return res.json({ message: "Something went wrong", status: false,error });
+  }
+});
 
 module.exports = router;

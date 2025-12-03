@@ -3,7 +3,13 @@ const { User } = require("../models/User");
 const { generateToken } = require("../config/JwtConfig");
 const { default: axios } = require("axios");
 const { Device } = require("../models/Devices");
-const { API_KEY, OTP_TEMPLATE_ID, CODING, CALLBACK_DATA, SENDER_ID } = require("../config/sms.config");
+const {
+  API_KEY,
+  OTP_TEMPLATE_ID,
+  CODING,
+  CALLBACK_DATA,
+  SENDER_ID,
+} = require("../config/sms.config");
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -102,11 +108,16 @@ const verifyOTP = async (req, res) => {
         req.body;
       const businessIddd = user?.businessId;
       console.log("business Id ", businessIddd);
-      const count = await Device.count({ where: { businessId: businessIddd } });
-      if (count >= 1) {
+      const device = await Device.findOne({
+        where: { businessId: businessIddd },
+        attributes: ["deviceName", "deviceModel", "deviceUniqueKey"],
+      });
+      if (device) {
         return res.status(400).json({
           message: "Already Logged In in different devices",
           status: false,
+          type: "ALREADY_LOGGED_IN",
+          device,
         });
       }
       await Device.create({
@@ -133,6 +144,7 @@ const verifyOTP = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   loginWithPhone,

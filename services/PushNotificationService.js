@@ -38,7 +38,7 @@ class PushNotificationService {
           },
           android: {
             notification: {
-              image: imageUrl,
+              imageUrl: imageUrl,
             },
           },
           apns: {

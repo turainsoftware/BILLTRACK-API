@@ -24,10 +24,11 @@ router.post("/sent-app-notification", jwtMiddleware, async (req, res) => {
       const { fcmToken } = device;
       PushNotificationService.sendNotification(fcmToken, title,body);
     });
-
+    console.log(devices);
+    console.log("Notification sent successfully");
     return res.json({
       success: true,
-      message: "User fetched successfully",
+      message: "Notification sent successfully",
     });
   } catch (error) {
     return res.json({
