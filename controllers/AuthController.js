@@ -78,7 +78,6 @@ const loginWithPhone = async (req, res) => {
       status: true,
     });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
@@ -107,7 +106,6 @@ const verifyOTP = async (req, res) => {
       const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
         req.body;
       const businessIddd = user?.businessId;
-      console.log("business Id ", businessIddd);
       const device = await Device.findOne({
         where: { businessId: businessIddd },
         attributes: ["deviceName", "deviceModel", "deviceUniqueKey"],
@@ -136,7 +134,6 @@ const verifyOTP = async (req, res) => {
       .status(200)
       .json({ message: "Login successful", status: true, token, data: user });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,

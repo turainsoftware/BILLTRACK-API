@@ -47,7 +47,6 @@ router.post("/", jwtMiddleware, async (req, res) => {
         totalAmount + new Number(item.rate) * new Number(item.quantity);
     });
 
-    console.info(totalAmount);
 
     const business = await User.findByPk(user.id, {
       attributes: ["businessId"],

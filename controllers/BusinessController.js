@@ -162,7 +162,6 @@ const addBusiness = async (req, res) => {
       });
     }
 
-    console.error("Error creating business:", error);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
@@ -181,7 +180,6 @@ const getBusiness = async (req, res) => {
       },
       attributes: ["businessId"],
     });
-    console.info(user);
     const business = await Business.findOne({
       where: {
         id: user.businessId,
