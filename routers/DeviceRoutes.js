@@ -14,7 +14,7 @@ router.delete("/remove-device/:deviceUniqueKey", async (req, res) => {
       where: { deviceUniqueKey },
     });
     if (!device)
-      return res.json({ message: "Device not found", status: false });
+      return res.json({ message: "Device not found", status: true });
     await device.destroy();
     return res.json({ message: "Device removed successfully", status: true });
   } catch (error) {
