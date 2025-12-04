@@ -1,5 +1,4 @@
 const express = require("express");
-const { route } = require("./BusinessRoute");
 const { jwtMiddleware } = require("../middleware/JwtMiddlware");
 const multer = require("multer");
 const router = express.Router();
