@@ -1,5 +1,5 @@
 const express = require("express");
-const kleur=require('kleur')
+const kleur = require("kleur");
 
 const BusinessCategoryRouter = require("./routers/BusinessCategoryRouter.js");
 const ProductRouter = require("./routers/productRouter");
@@ -14,6 +14,8 @@ const SalesAndReportRouter = require("./routers/SalesAndReportRouter.js");
 const DeviceRouter = require("./routers/DeviceRoutes.js");
 const NotificationRouter = require("./routers/NotificationRouter.js");
 const WebhookRouter = require("./routers/WebhookRouter.js");
+const PaymentRouter = require("./routers/PaymentRoutes.js");
+const SubscriptionRouter = require("./routers/SubscriptionRoutes.js")
 
 const logger = require("./middleware/Logger.js");
 
@@ -52,6 +54,8 @@ app.use("/api/v1/business", logger, BusinessRouter);
 app.use("/api/v1/sales-report", logger, SalesAndReportRouter);
 app.use("/api/v1/device", logger, DeviceRouter);
 app.use("/api/v1/notification", logger, NotificationRouter);
+app.use("/api/v1/payment", logger, PaymentRouter);
+app.use("/api/v1/subscription", logger, SubscriptionRouter);
 
 // WEBHOOK ROUTES
 app.use("/api/v1/webhook", logger, WebhookRouter);

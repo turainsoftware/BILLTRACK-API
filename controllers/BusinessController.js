@@ -4,6 +4,7 @@ const { BusinessCategory } = require("../models/BusinessCategory");
 const { Business } = require("../models/Business");
 const { User } = require("../models/User");
 const { Device } = require("../models/Devices");
+const Subscription = require("./../models/Subscription");
 
 function deleteUploadedFileSafely(file) {
   if (!file?.path && file?.filename) {
@@ -130,6 +131,10 @@ const addBusiness = async (req, res) => {
       { businessId: newBusiness.id },
       { where: { id: userId } }
     );
+
+    await Subscription.create({
+      businessId: newBusiness.id,
+    });
 
     if (newBusiness?.id) {
       const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
