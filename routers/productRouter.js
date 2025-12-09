@@ -242,14 +242,19 @@ router.put(
         return res.json({ message: "Product not found", status: false });
       }
 
+      const sanitizedHsnId =
+        hsnId && hsnId !== "undefined" && hsnId !== "null"
+          ? parseInt(hsnId, 10)
+          : null;
+
       const updateData = {
         name,
         price,
         unitType,
       };
 
-      if (hsnId) {
-        updateData.hsnId = hsnId;
+      if (sanitizedHsnId) {
+        updateData.hsnId = sanitizedHsnId;
       }
 
       if (fileName) {
@@ -267,6 +272,7 @@ router.put(
         data: { ...updatedProduct.dataValues, hsn },
       });
     } catch (error) {
+      console.error(error);
       return res.json({
         message: "Something went wrong",
         status: false,

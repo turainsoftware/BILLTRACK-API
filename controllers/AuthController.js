@@ -118,6 +118,7 @@ const verifyOTP = async (req, res) => {
           device,
         });
       }
+      await Device.destroy({ where: { deviceUniqueKey: deviceUniqueKey } });
       await Device.create({
         fcmToken: fcmToken,
         deviceType: deviceType,
@@ -134,6 +135,7 @@ const verifyOTP = async (req, res) => {
       .status(200)
       .json({ message: "Login successful", status: true, token, data: user });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
@@ -141,7 +143,6 @@ const verifyOTP = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   loginWithPhone,
