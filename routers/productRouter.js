@@ -1,5 +1,4 @@
 const express = require("express");
-const { route } = require("./BusinessRoute");
 const { jwtMiddleware } = require("../middleware/JwtMiddlware");
 const multer = require("multer");
 const router = express.Router();
@@ -117,13 +116,14 @@ router.post("/", upload.single("logo"), jwtMiddleware, async (req, res) => {
     if (fileName) {
       product.logo = fileName;
     }
-
     const createdProduct = await product.save();
+
+    const hsn = await Hsn.findByPk(hsnId);
 
     return res.json({
       message: "Product added successfully",
       status: true,
-      data: createdProduct,
+      data: { ...createdProduct.dataValues, hsn },
     });
   } catch (error) {
     return res.json({ error, message: "Something went wrong", status: false });
@@ -229,7 +229,8 @@ router.put(
     try {
       const fileName = req.file ? req.file.filename : null;
 
-      const { id, name, price, unitType } = req.body;
+      const { id, name, price, unitType, hsnId } = req.body;
+      console.log("hsn Id", hsnId);
 
       if (!id) {
         return res.json({ message: "Product id is required", status: false });
@@ -241,11 +242,20 @@ router.put(
         return res.json({ message: "Product not found", status: false });
       }
 
+      const sanitizedHsnId =
+        hsnId && hsnId !== "undefined" && hsnId !== "null"
+          ? parseInt(hsnId, 10)
+          : null;
+
       const updateData = {
         name,
         price,
         unitType,
       };
+
+      if (sanitizedHsnId) {
+        updateData.hsnId = sanitizedHsnId;
+      }
 
       if (fileName) {
         updateData.logo = fileName;
@@ -254,13 +264,15 @@ router.put(
       await Product.update(updateData, {
         where: { id },
       });
+      const hsn = await Hsn.findByPk(hsnId);
       const updatedProduct = await Product.findByPk(id);
       return res.json({
         message: "Product updated successfully",
         status: true,
-        data: updatedProduct,
+        data: { ...updatedProduct.dataValues, hsn },
       });
     } catch (error) {
+      console.error(error);
       return res.json({
         message: "Something went wrong",
         status: false,

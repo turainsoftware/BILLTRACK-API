@@ -47,8 +47,6 @@ router.post("/", jwtMiddleware, async (req, res) => {
         totalAmount + new Number(item.rate) * new Number(item.quantity);
     });
 
-    console.info(totalAmount);
-
     const business = await User.findByPk(user.id, {
       attributes: ["businessId"],
     });
@@ -87,7 +85,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
 
     return res
       .status(201)
-      .json({ message: "Invoice created successfully", status: true });
+      .json({ message: "Invoice created successfully", status: true, invoice });
   } catch (error) {
     if (transaction) {
       await transaction.rollback();

@@ -7,7 +7,6 @@ const create = async (req, res) => {
   try {
     const { name, hsnId, businessCategoryId } = req.body;
 
-    console.info(name, hsnId, businessCategoryId);
 
     const businessCategory = await BusinessCategory.findByPk(
       businessCategoryId

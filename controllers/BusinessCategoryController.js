@@ -100,7 +100,6 @@ const createBusinessCategoryBulk = async (req, res) => {
       status: true,
     });
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({
@@ -157,7 +156,6 @@ const updateById = async (req, res) => {
 
     return res.json({ message: "Successfully updated", status: true });
   } catch (error) {
-    console.error(error);
     return res.json({ message: "Something went wrong", status: false });
   }
 };
@@ -196,7 +194,6 @@ const reactiveById = async (req, res) => {
     );
     return res.json({ message: "Successfully updated", status: true });
   } catch (error) {
-    console.log(error);
     return res.json({ message: "Something went wrong", status: false });
   }
 };

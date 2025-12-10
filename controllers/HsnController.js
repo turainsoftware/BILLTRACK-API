@@ -217,7 +217,6 @@ const search = async (req, res) => {
 
     return res.status(200).json({ data, status: true });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: "Something went wrong", status: false });
   }
 };
@@ -283,7 +282,6 @@ const deActiveById = async (req, res) => {
       .json({ message: "Successfully deleted", status: true })
       .status(200);
   } catch (error) {
-    console.log(error);
     return res
       .json({ message: "Something went wrong", status: false })
       .status(500);
@@ -334,7 +332,6 @@ const deActiveByIdInBulk = async (req, res) => {
       .json({ message: "Successfully deleted", status: true })
       .status(200);
   } catch (error) {
-    console.error(error);
     return res
       .json({ message: "Something went wrong", status: false })
       .status(500);
@@ -423,7 +420,6 @@ const exportData=async (req, res) => {
 
     return res.status(400).json({ message: "Invalid format", status: false });
   } catch (error) {
-    console.error(error);
     return res
       .status(500)
       .json({ message: "Something went wrong", status: false });

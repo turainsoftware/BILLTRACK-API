@@ -305,7 +305,6 @@ router.get("/sales", jwtMiddleware, async (req, res) => {
       data: response,
     });
   } catch (error) {
-    console.error("Error generating sales report:", error);
     res.status(500).json({
       status: false,
       message: error.message || "Error generating sales report",

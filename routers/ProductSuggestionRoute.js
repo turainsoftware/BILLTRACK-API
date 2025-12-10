@@ -52,7 +52,6 @@ router.post("/bulk", async (req, res) => {
 router.get("/", jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
-    console.log(user);
     const business = await User.findByPk(user.id, {
       attributes: ["businessId"],
     });
@@ -104,7 +103,6 @@ router.get("/", jwtMiddleware, async (req, res) => {
       status: true,
     });
   } catch (error) {
-    console.error("Error fetching product categories:", error);
     return res.json({
       message: "Something went wrong",
       error: error.message,

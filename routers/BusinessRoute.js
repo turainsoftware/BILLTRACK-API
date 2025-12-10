@@ -135,7 +135,6 @@ router.put("/update", jwtMiddleware, async (req, res) => {
       business: updatedBusiness,
     });
   } catch (error) {
-    console.log(error);
     return res.json({
       status: false,
       message: "Something went wrong",

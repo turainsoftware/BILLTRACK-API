@@ -1,9 +1,9 @@
 const { DataTypes } = require("sequelize");
-const { sequilize } = require("../config/db");
+const { sequilize } = require("./../config/db");
 const { Business } = require("./Business");
 
-const User = sequilize.define(
-  "User",
+const Subscription = sequilize.define(
+  "Subscription",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -12,44 +12,42 @@ const User = sequilize.define(
     },
     businessId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
         model: "Business",
         key: "id",
       },
     },
-    name: {
+    plan: {
+      type: DataTypes.ENUM("free", "basic", "pro"),
+      allowNull: false,
+      defaultValue: "free",
+    },
+    orderId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    phone: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    email: {
+    paymentId: {
       type: DataTypes.STRING,
       allowNull: true,
-      unique: true,
     },
-    otp: {
+    paymentSignature: {
       type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "0000",
+      allowNull: true,
     },
-    role: {
-      type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN","USER"),
-      allowNull: false,
-      defaultValue: "EMPLOYEE", 
-    },
-    isActive: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    },
-    otpExpiry: {
+    startDate: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 14);
+        return date;
+      },
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -63,14 +61,11 @@ const User = sequilize.define(
     },
   },
   {
-    tableName: "User",
+    tableName: "Subscription",
     timestamps: true,
   }
 );
 
-User.belongsTo(Business, {
-  foreignKey: "businessId",
-  as: "businesses",
-});
+Subscription.belongsTo(Business, { foreignKey: "businessId" });
 
-module.exports = { User };
+module.exports = Subscription;

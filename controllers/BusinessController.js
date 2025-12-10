@@ -3,6 +3,8 @@ const multer = require("multer");
 const { BusinessCategory } = require("../models/BusinessCategory");
 const { Business } = require("../models/Business");
 const { User } = require("../models/User");
+const { Device } = require("../models/Devices");
+const Subscription = require("./../models/Subscription");
 
 function deleteUploadedFileSafely(file) {
   if (!file?.path && file?.filename) {
@@ -130,6 +132,23 @@ const addBusiness = async (req, res) => {
       { where: { id: userId } }
     );
 
+    await Subscription.create({
+      businessId: newBusiness.id,
+    });
+
+    if (newBusiness?.id) {
+      const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
+        req.body;
+      await Device.create({
+        fcmToken,
+        deviceType,
+        deviceModel,
+        deviceName,
+        deviceUniqueKey,
+        businessId: newBusiness.id,
+      });
+    }
+
     return res.status(201).json({
       message: "Business created successfully",
       status: true,
@@ -148,7 +167,6 @@ const addBusiness = async (req, res) => {
       });
     }
 
-    console.error("Error creating business:", error);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
@@ -167,7 +185,6 @@ const getBusiness = async (req, res) => {
       },
       attributes: ["businessId"],
     });
-    console.info(user);
     const business = await Business.findOne({
       where: {
         id: user.businessId,

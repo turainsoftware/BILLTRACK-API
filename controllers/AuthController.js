@@ -3,6 +3,13 @@ const { User } = require("../models/User");
 const { generateToken } = require("../config/JwtConfig");
 const { default: axios } = require("axios");
 const { Device } = require("../models/Devices");
+const {
+  API_KEY,
+  OTP_TEMPLATE_ID,
+  CODING,
+  CALLBACK_DATA,
+  SENDER_ID,
+} = require("../config/sms.config");
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -15,7 +22,6 @@ const loginSchema = Joi.object({
       "string.empty": "Phone number is required.",
     }),
 });
-
 
 const loginWithPhone = async (req, res) => {
   try {
@@ -47,13 +53,13 @@ const loginWithPhone = async (req, res) => {
     }
 
     const data = {
-      api_key: "ffc98cf3cf74d71941a9f5aefeb021af",
+      api_key: API_KEY,
       msg: `${otp} is your one time password (OTP). Please do not share the OTP with others. Team BillTrack.`,
-      senderid: "BLTRAK",
-      templateID: "1707173287654318591",
-      coding: "1",
+      senderid: SENDER_ID,
+      templateID: OTP_TEMPLATE_ID,
+      coding: CODING,
       to: phone,
-      callbackData: "cb",
+      callbackData: CALLBACK_DATA,
     };
 
     const response = await axios.post(
@@ -72,7 +78,6 @@ const loginWithPhone = async (req, res) => {
       status: true,
     });
   } catch (err) {
-    console.error(err);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
@@ -101,14 +106,19 @@ const verifyOTP = async (req, res) => {
       const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
         req.body;
       const businessIddd = user?.businessId;
-      console.log("business Id ", businessIddd);
-      const count = await Device.count({ where: { businessId: businessIddd } });
-      if (count >= 1) {
+      const device = await Device.findOne({
+        where: { businessId: businessIddd },
+        attributes: ["deviceName", "deviceModel", "deviceUniqueKey"],
+      });
+      if (device) {
         return res.status(400).json({
           message: "Already Logged In in different devices",
           status: false,
+          type: "ALREADY_LOGGED_IN",
+          device,
         });
       }
+      await Device.destroy({ where: { deviceUniqueKey: deviceUniqueKey } });
       await Device.create({
         fcmToken: fcmToken,
         deviceType: deviceType,
@@ -125,7 +135,7 @@ const verifyOTP = async (req, res) => {
       .status(200)
       .json({ message: "Login successful", status: true, token, data: user });
   } catch (err) {
-    console.error(err);
+    console.log(err);
     return res.status(500).json({
       message: "Something went wrong",
       status: false,
