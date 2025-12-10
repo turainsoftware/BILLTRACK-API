@@ -24,14 +24,22 @@ router.post("/", jwtMiddleware, async (req, res) => {
       },
     });
 
-    if (subscription && subscription?.plan !== "free") {
+    const { plan, orderId, paymentId, paymentSignature } = req.body;
+
+    if (subscription && subscription?.plan == "pro") {
       return res.json({
-        message: "Subscription already exists",
+        message: "You are already on pro plan",
         status: false,
       });
     }
 
-    const { plan, orderId, paymentId, paymentSignature } = req.body;
+    if(subscription && subscription?.plan == "basic" && plan == "basic") {
+      return res.json({
+        message: "You are already on basic plan",
+        status: false,
+      });
+    }
+
     if (!["free", "basic", "pro"].includes(plan)) {
       return res.json({
         message: "Invalid plan",
@@ -89,7 +97,7 @@ router.get("/current-subscription", jwtMiddleware, async (req, res) => {
         },
       },
       order: [["endDate", "DESC"]],
-      attributes: ["startDate","endDate","plan"]
+      attributes: ["startDate", "endDate", "plan"],
     });
     return res.json({
       message: "Subscription found successfully",
