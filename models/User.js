@@ -29,7 +29,7 @@ const User = sequilize.define(
     },
     email: {
       type: DataTypes.STRING,
-      allowNull: true, // ✅ allow null
+      allowNull: true,
       unique: true,
     },
     otp: {
@@ -38,9 +38,9 @@ const User = sequilize.define(
       defaultValue: "0000",
     },
     role: {
-      type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN"),
+      type: DataTypes.ENUM("ADMIN", "EMPLOYEE", "SUPERADMIN","USER"),
       allowNull: false,
-      defaultValue: "EMPLOYEE", // ✅ better default
+      defaultValue: "EMPLOYEE", 
     },
     isActive: {
       type: DataTypes.BOOLEAN,
