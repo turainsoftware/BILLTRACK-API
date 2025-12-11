@@ -15,7 +15,8 @@ const DeviceRouter = require("./routers/DeviceRoutes.js");
 const NotificationRouter = require("./routers/NotificationRouter.js");
 const WebhookRouter = require("./routers/WebhookRouter.js");
 const PaymentRouter = require("./routers/PaymentRoutes.js");
-const SubscriptionRouter = require("./routers/SubscriptionRoutes.js")
+const SubscriptionRouter = require("./routers/SubscriptionRoutes.js");
+const SmsRouter = require("./routers/SmsRoutes.js");
 
 const logger = require("./middleware/Logger.js");
 
@@ -56,6 +57,7 @@ app.use("/api/v1/device", logger, DeviceRouter);
 app.use("/api/v1/notification", logger, NotificationRouter);
 app.use("/api/v1/payment", logger, PaymentRouter);
 app.use("/api/v1/subscription", logger, SubscriptionRouter);
+app.use("/api/v1/sms", logger, SmsRouter);
 
 // WEBHOOK ROUTES
 app.use("/api/v1/webhook", logger, WebhookRouter);

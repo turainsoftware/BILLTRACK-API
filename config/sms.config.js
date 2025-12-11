@@ -4,6 +4,10 @@ const CODING = "1";
 const CALLBACK_DATA = "cb";
 
 const OTP_TEMPLATE_ID = "1707173287654318591";
+const INVOICE_TEMPLATE_ID = "1707174054863594380";
+
+const SMS_API = "https://smscannon.com/api/api.php";
+
 
 module.exports = {
   API_KEY,
@@ -11,4 +15,6 @@ module.exports = {
   CODING,
   CALLBACK_DATA,
   OTP_TEMPLATE_ID,
+  INVOICE_TEMPLATE_ID,
+  SMS_API
 };

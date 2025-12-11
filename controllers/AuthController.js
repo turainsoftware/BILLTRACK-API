@@ -9,6 +9,7 @@ const {
   CODING,
   CALLBACK_DATA,
   SENDER_ID,
+  SMS_API
 } = require("../config/sms.config");
 
 const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
@@ -63,7 +64,7 @@ const loginWithPhone = async (req, res) => {
     };
 
     const response = await axios.post(
-      "https://smscannon.com/api/api.php",
+      SMS_API,
       data,
       {
         headers: {
