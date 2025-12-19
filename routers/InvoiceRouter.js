@@ -12,7 +12,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
   try {
     const user = req.user;
 
-    const { status, customerNumber = "", items = [], paymentMode } = req.body;
+    const { status, customerNumber = "", items = [], paymentMode,discount } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
     if (!allowedStatus.includes(status)) {
       return res.status(400).json({
@@ -61,7 +61,8 @@ router.post("/", jwtMiddleware, async (req, res) => {
         invoiceNumber: invoiceNumber,
         userId: user?.id,
         businessId: businessId,
-        totalAmount: totalAmount,
+        totalAmount: totalAmount-parseFloat(discount),
+        discountAmount: parseFloat(discount),
         status: "paid",
         paymentMode: paymentMode,
         customerNumber,

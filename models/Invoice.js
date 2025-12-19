@@ -46,6 +46,11 @@ const Invoice = sequilize.define(
       allowNull: true,
       defaultValue: "cash",
     },
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: 0,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
