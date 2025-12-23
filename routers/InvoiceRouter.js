@@ -644,7 +644,7 @@ const generatePDFReport = async (
     size: "A4",
     bufferPages: true,
     info: {
-      Title: `Invoice Report - ${business. name}`,
+      Title: `Invoice Report - ${business.name}`,
       Author: "Billing System",
       Subject: `Invoice Report from ${fromDate} to ${toDate}`,
     },
@@ -653,25 +653,30 @@ const generatePDFReport = async (
   const fileName = `Invoice_Report_${sanitizeFileName(
     business.name
   )}_${fromDate}_to_${toDate}.pdf`;
+
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${fileName}"`
+  );
   doc.pipe(res);
 
-  // Simple colors - formal black/gray theme
+  // ================= COLORS =================
   const colors = {
     black: "#000000",
     darkGray: "#333333",
     gray: "#666666",
-    lightGray: "#CCCCCC",
+    lightGray: "#DDDDDD",
     white: "#FFFFFF",
   };
 
   const pageWidth = doc.page.width - 80;
   const startX = 40;
-  const contentStartY = 120;
+  const firstPageContentY = 120;
+  const otherPageContentY = 80;
   const contentEndY = 750;
 
-  // Table Configuration
+  // ================= TABLE CONFIG =================
   const colWidths = [75, 85, 60, 70, 80, 70, 75];
   const headers = [
     "Invoice #",
@@ -685,30 +690,29 @@ const generatePDFReport = async (
   const rowHeight = 20;
   const headerHeight = 25;
 
-  // Helper function to draw page header
-  const drawPageHeader = () => {
-    // Business Name
+  // ================= FIRST PAGE HEADER =================
+  const drawFirstPageHeader = () => {
     doc
       .fontSize(16)
       .font("Helvetica-Bold")
-      .fillColor(colors. black)
-      .text(business.name. toUpperCase(), startX, 40, {
+      .fillColor(colors.black)
+      .text(business.name.toUpperCase(), startX, 40, {
         width: pageWidth,
         align: "center",
       });
 
-    let headerY = 58;
+    let y = 58;
 
     if (business.gstNumber) {
       doc
         .fontSize(9)
         .font("Helvetica")
         .fillColor(colors.darkGray)
-        .text(`GSTIN: ${business.gstNumber}`, startX, headerY, {
-          width:  pageWidth,
+        .text(`GSTIN: ${business.gstNumber}`, startX, y, {
+          width: pageWidth,
           align: "center",
         });
-      headerY += 12;
+      y += 12;
     }
 
     if (business.address) {
@@ -716,21 +720,20 @@ const generatePDFReport = async (
         .fontSize(8)
         .font("Helvetica")
         .fillColor(colors.gray)
-        .text(business.address, startX, headerY, {
-          width:  pageWidth,
+        .text(business.address, startX, y, {
+          width: pageWidth,
           align: "center",
         });
-      headerY += 12;
+      y += 12;
     }
 
-    // Report Title
     doc
       .fontSize(11)
       .font("Helvetica-Bold")
-      .fillColor(colors. black)
-      .text("INVOICE REPORT", startX, headerY + 5, {
+      .fillColor(colors.black)
+      .text("INVOICE REPORT", startX, y + 5, {
         width: pageWidth,
-        align:  "center",
+        align: "center",
       });
 
     doc
@@ -740,14 +743,10 @@ const generatePDFReport = async (
       .text(
         `Period: ${formatDateDisplay(fromDate)} to ${formatDateDisplay(toDate)}`,
         startX,
-        headerY + 18,
-        {
-          width: pageWidth,
-          align:  "center",
-        }
+        y + 18,
+        { width: pageWidth, align: "center" }
       );
 
-    // Header underline
     doc
       .lineWidth(1)
       .strokeColor(colors.black)
@@ -756,9 +755,18 @@ const generatePDFReport = async (
       .stroke();
   };
 
-  // Helper function to draw page footer
-  const drawPageFooter = (currentPage, totalPages) => {
-    // Footer line
+  // ================= OTHER PAGE HEADER =================
+  const drawOtherPageHeader = () => {
+    doc
+      .lineWidth(1)
+      .strokeColor(colors.black)
+      .moveTo(startX, 60)
+      .lineTo(startX + pageWidth, 60)
+      .stroke();
+  };
+
+  // ================= FOOTER =================
+  const drawPageFooter = (page, total) => {
     doc
       .lineWidth(0.5)
       .strokeColor(colors.lightGray)
@@ -766,140 +774,127 @@ const generatePDFReport = async (
       .lineTo(startX + pageWidth, 770)
       .stroke();
 
-    // Footer text
     doc
       .fontSize(8)
       .font("Helvetica")
       .fillColor(colors.gray)
       .text(`Generated: ${new Date().toLocaleString("en-IN")}`, startX, 778);
 
-    doc.text(`Page ${currentPage} of ${totalPages}`, startX, 778, {
-      width:  pageWidth,
+    doc.text(`Page ${page} of ${total}`, startX, 778, {
+      width: pageWidth,
       align: "right",
     });
   };
 
-  // Helper function to draw table header
-  const drawTableHeader = (yPos) => {
-    // Header background
-    doc. rect(startX, yPos, pageWidth, headerHeight).fill(colors.lightGray);
+  // ================= TABLE HEADER =================
+  const drawTableHeader = (y) => {
+    doc.rect(startX, y, pageWidth, headerHeight).fill(colors.lightGray);
 
-    // Header border
     doc
       .lineWidth(1)
       .strokeColor(colors.black)
-      .rect(startX, yPos, pageWidth, headerHeight)
+      .rect(startX, y, pageWidth, headerHeight)
       .stroke();
 
-    // Header text
-    let xPos = startX;
+    let x = startX;
     doc.fontSize(9).font("Helvetica-Bold").fillColor(colors.black);
 
-    headers.forEach((header, i) => {
-      doc. text(header, xPos + 3, yPos + 7, {
+    headers.forEach((h, i) => {
+      doc.text(h, x + 3, y + 7, {
         width: colWidths[i] - 6,
-        align:  "center",
+        align: "center",
       });
 
-      // Vertical lines
-      if (i < headers. length - 1) {
+      if (i < headers.length - 1) {
         doc
           .lineWidth(0.5)
-          .moveTo(xPos + colWidths[i], yPos)
-          .lineTo(xPos + colWidths[i], yPos + headerHeight)
+          .moveTo(x + colWidths[i], y)
+          .lineTo(x + colWidths[i], y + headerHeight)
           .stroke();
       }
-
-      xPos += colWidths[i];
+      x += colWidths[i];
     });
 
-    return yPos + headerHeight;
+    return y + headerHeight;
   };
 
-  // Draw first page header
-  drawPageHeader();
+  // ================= FIRST PAGE =================
+  drawFirstPageHeader();
+  let yPos = firstPageContentY;
 
-  let yPos = contentStartY;
-
-  // Summary Section (only on first page)
+  // Summary
   doc
     .fontSize(10)
     .font("Helvetica-Bold")
-    .fillColor(colors. black)
+    .fillColor(colors.black)
     .text("Summary:", startX, yPos);
 
   yPos += 15;
 
-  const summaryText = [
-    `Total Invoices:  ${summary.totalInvoices}`,
+  const summaryLines = [
+    `Total Invoices: ${summary.totalInvoices}`,
     `Total Revenue: ₹${formatNumber(summary.totalAmount)}`,
-    `Total Discount: ₹${formatNumber(summary. totalDiscount)}`,
-    `Paid:  ${summary.paidCount} | Unpaid: ${summary. unpaidCount} | Canceled: ${summary.canceledCount}`,
+    `Total Discount: ₹${formatNumber(summary.totalDiscount)}`,
+    `Paid: ${summary.paidCount} | Unpaid: ${summary.unpaidCount} | Cancelled: ${summary.canceledCount}`,
   ];
 
   doc.fontSize(9).font("Helvetica").fillColor(colors.darkGray);
-  summaryText.forEach((text) => {
-    doc.text(text, startX, yPos);
+  summaryLines.forEach((t) => {
+    doc.text(t, startX, yPos);
     yPos += 12;
   });
 
   yPos += 15;
-
-  // Draw table header
   yPos = drawTableHeader(yPos);
 
-  // Draw table rows
-  reportData. forEach((invoice, index) => {
-    // Check for page break
+  // ================= TABLE ROWS =================
+  reportData.forEach((invoice) => {
     if (yPos + rowHeight > contentEndY) {
       doc.addPage();
-      drawPageHeader();
-      yPos = contentStartY;
+      drawOtherPageHeader();
+      yPos = otherPageContentY;
       yPos = drawTableHeader(yPos);
     }
 
-    // Row border
     doc
       .lineWidth(0.5)
       .strokeColor(colors.black)
       .rect(startX, yPos, pageWidth, rowHeight)
       .stroke();
 
-    let xPos = startX;
-    const rowData = [
+    let x = startX;
+    const row = [
       invoice.invoiceNumber,
-      invoice. customerNumber,
-      invoice. status,
+      invoice.customerNumber,
+      invoice.status,
       invoice.paymentMode,
       `₹${formatNumber(invoice.totalAmount)}`,
       `₹${formatNumber(invoice.discountAmount)}`,
-      invoice.createdAt,
+      formatDateDisplay(invoice.createdAt),
     ];
 
-    doc.fontSize(8).font("Helvetica").fillColor(colors. black);
+    doc.fontSize(8).font("Helvetica").fillColor(colors.black);
 
-    rowData.forEach((text, i) => {
-      doc.text(text, xPos + 3, yPos + 5, {
+    row.forEach((txt, i) => {
+      doc.text(txt, x + 3, yPos + 5, {
         width: colWidths[i] - 6,
-        align:  "center",
+        align: "center",
       });
 
-      // Vertical lines
-      if (i < rowData.length - 1) {
+      if (i < row.length - 1) {
         doc
-          . lineWidth(0.5)
-          .moveTo(xPos + colWidths[i], yPos)
-          .lineTo(xPos + colWidths[i], yPos + rowHeight)
+          .lineWidth(0.5)
+          .moveTo(x + colWidths[i], yPos)
+          .lineTo(x + colWidths[i], yPos + rowHeight)
           .stroke();
       }
-
-      xPos += colWidths[i];
+      x += colWidths[i];
     });
 
     yPos += rowHeight;
   });
 
-  // Add footers to all pages
+  // ================= FOOTERS =================
   const pages = doc.bufferedPageRange();
   for (let i = 0; i < pages.count; i++) {
     doc.switchToPage(i);
@@ -908,6 +903,7 @@ const generatePDFReport = async (
 
   doc.end();
 };
+
 
 // ==================== CSV REPORT ====================
 const generateCSVReport = async (
