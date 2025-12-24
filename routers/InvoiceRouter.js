@@ -315,9 +315,9 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
 
     const formatLower = format.toLowerCase();
 
+    let base64 = "";
     if (formatLower === "excel") {
-      return await generateExcelReport(
-        res,
+      base64 = await generateExcelReport(
         business,
         reportData,
         summary,
@@ -325,8 +325,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         toDate
       );
     } else if (formatLower === "pdf") {
-      return await generatePDFReport(
-        res,
+      base64 = await generatePDFReport(
         business,
         reportData,
         summary,
@@ -334,8 +333,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         toDate
       );
     } else if (formatLower === "csv") {
-      return await generateCSVReport(
-        res,
+      base64 = await generateCSVReport(
         business,
         reportData,
         summary,
@@ -343,6 +341,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         toDate
       );
     }
+    return res.send(base64);
   } catch (error) {
     console.error("Report generation error:", error);
     return res.status(500).json({
@@ -355,7 +354,6 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
 
 // ==================== EXCEL REPORT ====================
 const generateExcelReport = async (
-  res,
   business,
   reportData,
   summary,
@@ -617,297 +615,280 @@ const generateExcelReport = async (
   footerCell.alignment = { horizontal: "center", vertical: "middle" };
 
   // File response
-  const fileName = `Invoice_Report_${sanitizeFileName(
-    business.name
-  )}_${fromDate}_to_${toDate}.xlsx`;
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument. spreadsheetml. sheet"
-  );
-  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-
-  await workbook.xlsx.write(res);
-  res.end();
+  const buffer = await workbook.xlsx.writeBuffer();
+  return buffer.toString("base64");
 };
 
 // ==================== PDF REPORT ====================
-const generatePDFReport = async (
-  res,
-  business,
-  reportData,
-  summary,
-  fromDate,
-  toDate
-) => {
-  const doc = new PDFDocument({
-    margin: 40,
-    size: "A4",
-    bufferPages: true,
-    info: {
-      Title: `Invoice Report - ${business.name}`,
-      Author: "Billing System",
-      Subject: `Invoice Report from ${fromDate} to ${toDate}`,
-    },
-  });
+const generatePDFReport = (business, reportData, summary, fromDate, toDate) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({
+      margin: 40,
+      size: "A4",
+      bufferPages: true,
+      info: {
+        Title: `Invoice Report - ${business.name}`,
+        Author: "Billing System",
+        Subject: `Invoice Report from ${fromDate} to ${toDate}`,
+      },
+    });
 
-  const fileName = `Invoice_Report_${sanitizeFileName(
-    business.name
-  )}_${fromDate}_to_${toDate}.pdf`;
+    const buffers = [];
+    doc.on("data", buffers.push.bind(buffers));
+    doc.on("end", () => {
+      const pdfData = Buffer.concat(buffers);
+      resolve(pdfData.toString("base64"));
+    });
+    doc.on("error", reject);
 
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="${fileName}"`
-  );
-  doc.pipe(res);
+    // ================= COLORS =================
+    const colors = {
+      black: "#000000",
+      darkGray: "#333333",
+      gray: "#666666",
+      lightGray: "#DDDDDD",
+      white: "#FFFFFF",
+    };
 
-  // ================= COLORS =================
-  const colors = {
-    black: "#000000",
-    darkGray: "#333333",
-    gray: "#666666",
-    lightGray: "#DDDDDD",
-    white: "#FFFFFF",
-  };
+    const pageWidth = doc.page.width - 80;
+    const startX = 40;
+    const firstPageContentY = 120;
+    const otherPageContentY = 80;
+    const contentEndY = 750;
 
-  const pageWidth = doc.page.width - 80;
-  const startX = 40;
-  const firstPageContentY = 120;
-  const otherPageContentY = 80;
-  const contentEndY = 750;
+    // ================= TABLE CONFIG =================
+    const colWidths = [75, 85, 60, 70, 80, 70, 75];
+    const headers = [
+      "Invoice #",
+      "Customer",
+      "Status",
+      "Payment",
+      "Amount",
+      "Discount",
+      "Date",
+    ];
+    const rowHeight = 20;
+    const headerHeight = 25;
 
-  // ================= TABLE CONFIG =================
-  const colWidths = [75, 85, 60, 70, 80, 70, 75];
-  const headers = [
-    "Invoice #",
-    "Customer",
-    "Status",
-    "Payment",
-    "Amount",
-    "Discount",
-    "Date",
-  ];
-  const rowHeight = 20;
-  const headerHeight = 25;
+    // ================= FIRST PAGE HEADER =================
+    const drawFirstPageHeader = () => {
+      doc
+        .fontSize(16)
+        .font("Helvetica-Bold")
+        .fillColor(colors.black)
+        .text(business.name.toUpperCase(), startX, 40, {
+          width: pageWidth,
+          align: "center",
+        });
 
-  // ================= FIRST PAGE HEADER =================
-  const drawFirstPageHeader = () => {
-    doc
-      .fontSize(16)
-      .font("Helvetica-Bold")
-      .fillColor(colors.black)
-      .text(business.name.toUpperCase(), startX, 40, {
-        width: pageWidth,
-        align: "center",
-      });
+      let y = 58;
 
-    let y = 58;
+      if (business.gstNumber) {
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .fillColor(colors.darkGray)
+          .text(`GSTIN: ${business.gstNumber}`, startX, y, {
+            width: pageWidth,
+            align: "center",
+          });
+        y += 12;
+      }
 
-    if (business.gstNumber) {
+      if (business.address) {
+        doc
+          .fontSize(8)
+          .font("Helvetica")
+          .fillColor(colors.gray)
+          .text(business.address, startX, y, {
+            width: pageWidth,
+            align: "center",
+          });
+        y += 12;
+      }
+
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .fillColor(colors.black)
+        .text("INVOICE REPORT", startX, y + 5, {
+          width: pageWidth,
+          align: "center",
+        });
+
       doc
         .fontSize(9)
         .font("Helvetica")
         .fillColor(colors.darkGray)
-        .text(`GSTIN: ${business.gstNumber}`, startX, y, {
-          width: pageWidth,
-          align: "center",
-        });
-      y += 12;
-    }
+        .text(
+          `Period: ${formatDateDisplay(fromDate)} to ${formatDateDisplay(
+            toDate
+          )}`,
+          startX,
+          y + 18,
+          { width: pageWidth, align: "center" }
+        );
 
-    if (business.address) {
+      doc
+        .lineWidth(1)
+        .strokeColor(colors.black)
+        .moveTo(startX, 115)
+        .lineTo(startX + pageWidth, 115)
+        .stroke();
+    };
+
+    // ================= OTHER PAGE HEADER =================
+    const drawOtherPageHeader = () => {
+      doc
+        .lineWidth(1)
+        .strokeColor(colors.black)
+        .moveTo(startX, 60)
+        .lineTo(startX + pageWidth, 60)
+        .stroke();
+    };
+
+    // ================= FOOTER =================
+    const drawPageFooter = (page, total) => {
+      doc
+        .lineWidth(0.5)
+        .strokeColor(colors.lightGray)
+        .moveTo(startX, 770)
+        .lineTo(startX + pageWidth, 770)
+        .stroke();
+
       doc
         .fontSize(8)
         .font("Helvetica")
         .fillColor(colors.gray)
-        .text(business.address, startX, y, {
-          width: pageWidth,
+        .text(`Generated: ${new Date().toLocaleString("en-IN")}`, startX, 778);
+
+      doc.text(`Page ${page} of ${total}`, startX, 778, {
+        width: pageWidth,
+        align: "right",
+      });
+    };
+
+    // ================= TABLE HEADER =================
+    const drawTableHeader = (y) => {
+      doc.rect(startX, y, pageWidth, headerHeight).fill(colors.lightGray);
+
+      doc
+        .lineWidth(1)
+        .strokeColor(colors.black)
+        .rect(startX, y, pageWidth, headerHeight)
+        .stroke();
+
+      let x = startX;
+      doc.fontSize(9).font("Helvetica-Bold").fillColor(colors.black);
+
+      headers.forEach((h, i) => {
+        doc.text(h, x + 3, y + 7, {
+          width: colWidths[i] - 6,
           align: "center",
         });
-      y += 12;
-    }
 
+        if (i < headers.length - 1) {
+          doc
+            .lineWidth(0.5)
+            .moveTo(x + colWidths[i], y)
+            .lineTo(x + colWidths[i], y + headerHeight)
+            .stroke();
+        }
+        x += colWidths[i];
+      });
+
+      return y + headerHeight;
+    };
+
+    // ================= FIRST PAGE =================
+    drawFirstPageHeader();
+    let yPos = firstPageContentY;
+
+    // Summary
     doc
-      .fontSize(11)
+      .fontSize(10)
       .font("Helvetica-Bold")
       .fillColor(colors.black)
-      .text("INVOICE REPORT", startX, y + 5, {
-        width: pageWidth,
-        align: "center",
-      });
+      .text("Summary:", startX, yPos);
 
-    doc
-      .fontSize(9)
-      .font("Helvetica")
-      .fillColor(colors.darkGray)
-      .text(
-        `Period: ${formatDateDisplay(fromDate)} to ${formatDateDisplay(toDate)}`,
-        startX,
-        y + 18,
-        { width: pageWidth, align: "center" }
-      );
+    yPos += 15;
 
-    doc
-      .lineWidth(1)
-      .strokeColor(colors.black)
-      .moveTo(startX, 115)
-      .lineTo(startX + pageWidth, 115)
-      .stroke();
-  };
-
-  // ================= OTHER PAGE HEADER =================
-  const drawOtherPageHeader = () => {
-    doc
-      .lineWidth(1)
-      .strokeColor(colors.black)
-      .moveTo(startX, 60)
-      .lineTo(startX + pageWidth, 60)
-      .stroke();
-  };
-
-  // ================= FOOTER =================
-  const drawPageFooter = (page, total) => {
-    doc
-      .lineWidth(0.5)
-      .strokeColor(colors.lightGray)
-      .moveTo(startX, 770)
-      .lineTo(startX + pageWidth, 770)
-      .stroke();
-
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(colors.gray)
-      .text(`Generated: ${new Date().toLocaleString("en-IN")}`, startX, 778);
-
-    doc.text(`Page ${page} of ${total}`, startX, 778, {
-      width: pageWidth,
-      align: "right",
-    });
-  };
-
-  // ================= TABLE HEADER =================
-  const drawTableHeader = (y) => {
-    doc.rect(startX, y, pageWidth, headerHeight).fill(colors.lightGray);
-
-    doc
-      .lineWidth(1)
-      .strokeColor(colors.black)
-      .rect(startX, y, pageWidth, headerHeight)
-      .stroke();
-
-    let x = startX;
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(colors.black);
-
-    headers.forEach((h, i) => {
-      doc.text(h, x + 3, y + 7, {
-        width: colWidths[i] - 6,
-        align: "center",
-      });
-
-      if (i < headers.length - 1) {
-        doc
-          .lineWidth(0.5)
-          .moveTo(x + colWidths[i], y)
-          .lineTo(x + colWidths[i], y + headerHeight)
-          .stroke();
-      }
-      x += colWidths[i];
-    });
-
-    return y + headerHeight;
-  };
-
-  // ================= FIRST PAGE =================
-  drawFirstPageHeader();
-  let yPos = firstPageContentY;
-
-  // Summary
-  doc
-    .fontSize(10)
-    .font("Helvetica-Bold")
-    .fillColor(colors.black)
-    .text("Summary:", startX, yPos);
-
-  yPos += 15;
-
-  const summaryLines = [
-    `Total Invoices: ${summary.totalInvoices}`,
-    `Total Revenue: ₹${formatNumber(summary.totalAmount)}`,
-    `Total Discount: ₹${formatNumber(summary.totalDiscount)}`,
-    `Paid: ${summary.paidCount} | Unpaid: ${summary.unpaidCount} | Cancelled: ${summary.canceledCount}`,
-  ];
-
-  doc.fontSize(9).font("Helvetica").fillColor(colors.darkGray);
-  summaryLines.forEach((t) => {
-    doc.text(t, startX, yPos);
-    yPos += 12;
-  });
-
-  yPos += 15;
-  yPos = drawTableHeader(yPos);
-
-  // ================= TABLE ROWS =================
-  reportData.forEach((invoice) => {
-    if (yPos + rowHeight > contentEndY) {
-      doc.addPage();
-      drawOtherPageHeader();
-      yPos = otherPageContentY;
-      yPos = drawTableHeader(yPos);
-    }
-
-    doc
-      .lineWidth(0.5)
-      .strokeColor(colors.black)
-      .rect(startX, yPos, pageWidth, rowHeight)
-      .stroke();
-
-    let x = startX;
-    const row = [
-      invoice.invoiceNumber,
-      invoice.customerNumber,
-      invoice.status,
-      invoice.paymentMode,
-      `₹${formatNumber(invoice.totalAmount)}`,
-      `₹${formatNumber(invoice.discountAmount)}`,
-      formatDateDisplay(invoice.createdAt),
+    const summaryLines = [
+      `Total Invoices: ${summary.totalInvoices}`,
+      `Total Revenue: ₹${formatNumber(summary.totalAmount)}`,
+      `Total Discount: ₹${formatNumber(summary.totalDiscount)}`,
+      `Paid: ${summary.paidCount} | Unpaid: ${summary.unpaidCount} | Cancelled: ${summary.canceledCount}`,
     ];
 
-    doc.fontSize(8).font("Helvetica").fillColor(colors.black);
-
-    row.forEach((txt, i) => {
-      doc.text(txt, x + 3, yPos + 5, {
-        width: colWidths[i] - 6,
-        align: "center",
-      });
-
-      if (i < row.length - 1) {
-        doc
-          .lineWidth(0.5)
-          .moveTo(x + colWidths[i], yPos)
-          .lineTo(x + colWidths[i], yPos + rowHeight)
-          .stroke();
-      }
-      x += colWidths[i];
+    doc.fontSize(9).font("Helvetica").fillColor(colors.darkGray);
+    summaryLines.forEach((t) => {
+      doc.text(t, startX, yPos);
+      yPos += 12;
     });
 
-    yPos += rowHeight;
+    yPos += 15;
+    yPos = drawTableHeader(yPos);
+
+    // ================= TABLE ROWS =================
+    reportData.forEach((invoice) => {
+      if (yPos + rowHeight > contentEndY) {
+        doc.addPage();
+        drawOtherPageHeader();
+        yPos = otherPageContentY;
+        yPos = drawTableHeader(yPos);
+      }
+
+      doc
+        .lineWidth(0.5)
+        .strokeColor(colors.black)
+        .rect(startX, yPos, pageWidth, rowHeight)
+        .stroke();
+
+      let x = startX;
+      const row = [
+        invoice.invoiceNumber,
+        invoice.customerNumber,
+        invoice.status,
+        invoice.paymentMode,
+        `₹${formatNumber(invoice.totalAmount)}`,
+        `₹${formatNumber(invoice.discountAmount)}`,
+        formatDateDisplay(invoice.createdAt),
+      ];
+
+      doc.fontSize(8).font("Helvetica").fillColor(colors.black);
+
+      row.forEach((txt, i) => {
+        doc.text(txt, x + 3, yPos + 5, {
+          width: colWidths[i] - 6,
+          align: "center",
+        });
+
+        if (i < row.length - 1) {
+          doc
+            .lineWidth(0.5)
+            .moveTo(x + colWidths[i], yPos)
+            .lineTo(x + colWidths[i], yPos + rowHeight)
+            .stroke();
+        }
+        x += colWidths[i];
+      });
+
+      yPos += rowHeight;
+    });
+
+    // ================= FOOTERS =================
+    const pages = doc.bufferedPageRange();
+    for (let i = 0; i < pages.count; i++) {
+      doc.switchToPage(i);
+      drawPageFooter(i + 1, pages.count);
+    }
+
+    doc.end();
   });
-
-  // ================= FOOTERS =================
-  const pages = doc.bufferedPageRange();
-  for (let i = 0; i < pages.count; i++) {
-    doc.switchToPage(i);
-    drawPageFooter(i + 1, pages.count);
-  }
-
-  doc.end();
 };
-
 
 // ==================== CSV REPORT ====================
 const generateCSVReport = async (
-  res,
   business,
   reportData,
   summary,
@@ -1082,13 +1063,7 @@ const generateCSVReport = async (
   // Add BOM for Excel UTF-8 compatibility
   const csvWithBom = "\uFEFF" + csv;
 
-  const fileName = `Invoice_Report_${sanitizeFileName(
-    business.name
-  )}_${fromDate}_to_${toDate}.csv`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-
-  res.send(csvWithBom);
+  return Buffer.from(csvWithBom, "utf-8").toString("base64");
 };
 
 // ==================== HELPER FUNCTIONS ====================
@@ -1118,7 +1093,5 @@ const formatDateDisplay = (dateStr) => {
 const sanitizeFileName = (name) => {
   return name.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
 };
-
-module.exports = router;
 
 module.exports = router;
