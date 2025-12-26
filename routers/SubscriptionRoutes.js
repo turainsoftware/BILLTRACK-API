@@ -121,7 +121,7 @@ router.get("/subscription", jwtMiddleware, async (req, res) => {
       attributes: ["businessId"],
     });
     const { businessId } = business?.dataValues || {};
-    const subscription = await Subscription.findOne({
+    const subscription = await Subscription.findAll({
       where: {
         businessId: businessId,
       },
