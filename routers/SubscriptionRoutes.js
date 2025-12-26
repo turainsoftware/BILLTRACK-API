@@ -33,7 +33,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
       });
     }
 
-    if(subscription && subscription?.plan == "basic" && plan == "basic") {
+    if (subscription && subscription?.plan == "basic" && plan == "basic") {
       return res.json({
         message: "You are already on basic plan",
         status: false,
@@ -99,6 +99,33 @@ router.get("/current-subscription", jwtMiddleware, async (req, res) => {
       },
       order: [["endDate", "DESC"]],
       attributes: ["startDate", "endDate", "plan"],
+    });
+    return res.json({
+      message: "Subscription found successfully",
+      status: true,
+      data: subscription,
+    });
+  } catch (error) {
+    return res.json({
+      error: error,
+      message: "Something went wrong",
+      status: false,
+    });
+  }
+});
+
+router.get("/subscription", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business?.dataValues || {};
+    const subscription = await Subscription.findOne({
+      where: {
+        businessId: businessId,
+      },
+      order: [["endDate", "DESC"]],
     });
     return res.json({
       message: "Subscription found successfully",
