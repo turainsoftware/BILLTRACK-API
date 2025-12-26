@@ -24,7 +24,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
       },
     });
 
-    const { plan, orderId, paymentId, paymentSignature } = req.body;
+    const { plan, orderId, paymentId, paymentSignature, amount } = req.body;
 
     if (subscription && subscription?.plan == "pro") {
       return res.json({
@@ -66,6 +66,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
       paymentSignature: paymentSignature,
       startDate: startDate,
       endDate: endDate,
+      amount: amount,
     });
 
     return res.json({

@@ -35,6 +35,11 @@ const Subscription = sequilize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    amount:{
+      type: DataTypes.DOUBLE,
+      allowNull: false,
+      defaultValue: 0,
+    },
     startDate: {
       type: DataTypes.DATE,
       allowNull: false,
