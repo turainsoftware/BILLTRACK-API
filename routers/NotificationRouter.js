@@ -22,7 +22,7 @@ router.post("/sent-app-notification", jwtMiddleware, async (req, res) => {
 
     devices.map((device) => {
       const { fcmToken } = device;
-      PushNotificationService.sendNotification(fcmToken, title,body);
+      PushNotificationService.sendNotification(fcmToken, title, body);
     });
     return res.json({
       success: true,
@@ -36,14 +36,17 @@ router.post("/sent-app-notification", jwtMiddleware, async (req, res) => {
   }
 });
 
-router.post("/sent-app-notification-with-image",jwtMiddleware,async(req,res)=>{
+router.post(
+  "/sent-app-notification-with-image",
+  jwtMiddleware,
+  async (req, res) => {
     try {
       const user = req.user;
       const userBusiness = await User.findByPk(user.id, {
         attributes: ["businessId"],
       });
 
-      const { title, body,imageUrl } = req.body;
+      const { title, body, imageUrl } = req.body;
 
       const { businessId } = userBusiness.dataValues;
       const devices = await Device.findAll({
@@ -53,7 +56,12 @@ router.post("/sent-app-notification-with-image",jwtMiddleware,async(req,res)=>{
 
       devices.map((device) => {
         const { fcmToken } = device;
-        PushNotificationService.sendNotificationWithImage(fcmToken, title,body,imageUrl);
+        PushNotificationService.sendNotificationWithImage(
+          fcmToken,
+          title,
+          body,
+          imageUrl
+        );
       });
 
       return res.json({
@@ -61,11 +69,37 @@ router.post("/sent-app-notification-with-image",jwtMiddleware,async(req,res)=>{
         message: "User fetched successfully",
       });
     } catch (error) {
-        return res.json({
-            success: false,
-            message: error.message,
-          });      
+      return res.json({
+        success: false,
+        message: error.message,
+      });
     }
-})
+  }
+);
+
+router.post("/sent-app-notification-to-all-user", async (req, res) => {
+  try {
+    const fcmTokens = await Device.findAll({
+      attributes: ["fcmToken"],
+    });
+
+    const { title, body } = req.body;
+
+    fcmTokens.map((token) => {
+      const { fcmToken } = token.dataValues;
+      PushNotificationService.sendNotification(fcmToken, title, body);
+    });
+
+    return res.json({
+      success: true,
+      message: "Notification sent successfully",
+    });
+  } catch (error) {
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 module.exports = router;
