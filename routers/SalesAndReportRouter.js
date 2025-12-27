@@ -118,8 +118,41 @@ const getDayLabels = (period, startDate) => {
       return labels;
 
     case "month":
-      // Show weekly data (4 weeks + extra days)
-      return ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
+      // Show weekly data (5 weeks)
+      const monthBucketLabels = [];
+      const mNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      for (let i = 0; i < 5; i++) {
+        const wStart = new Date(startDate);
+        wStart.setDate(wStart.getDate() + i * 7);
+
+        const wEnd = new Date(wStart);
+        wEnd.setDate(wStart.getDate() + 6);
+
+        const sDay = wStart.getDate();
+        const eDay = wEnd.getDate();
+        const sMonth = mNames[wStart.getMonth()];
+        const eMonth = mNames[wEnd.getMonth()];
+
+        if (wStart.getMonth() === wEnd.getMonth()) {
+          monthBucketLabels.push(`${sDay}-${eDay} ${eMonth}`);
+        } else {
+          monthBucketLabels.push(`${sDay} ${sMonth}-${eDay} ${eMonth}`);
+        }
+      }
+      return monthBucketLabels;
 
     case "3months":
       // Show actual month names
