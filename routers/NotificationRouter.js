@@ -91,11 +91,6 @@ router.post("/send-app-notification-to-all-user", async (req, res) => {
 
     const devices = await Device.findAll({
       attributes: ["fcmToken"],
-      where: {
-        fcmToken: {
-          [Op.ne]: null,
-        },
-      },
       raw: true,
     });
 
@@ -123,6 +118,7 @@ router.post("/send-app-notification-to-all-user", async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({
+      error,
       success: false,
       message: "Failed to send notification",
     });
