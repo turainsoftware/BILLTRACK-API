@@ -1,82 +1,111 @@
 const express = require("express");
 const router = express.Router();
-const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
 const { User } = require("../models/User");
 const { Device } = require("../models/Devices");
 const PushNotificationService = require("../services/PushNotificationService");
+const { Op } = require("sequelize");
+const { Notifications } = require("../models/Notifications");
+const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
 
-router.post("/sent-app-notification", jwtMiddleware, async (req, res) => {
+router.post("/sent-app-notification", async (req, res) => {
   try {
-    const user = req.user;
-    const userBusiness = await User.findByPk(user.id, {
-      attributes: ["businessId"],
-    });
+    const { title, body, businesses = [] } = req.body;
 
-    const { title, body } = req.body;
+    if (!title || !body || !businesses.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, body and businesses are required",
+      });
+    }
 
-    const { businessId } = userBusiness.dataValues;
     const devices = await Device.findAll({
-      where: { businessId: businessId },
-      attributes: ["fcmToken"],
+      where: { businessId: { [Op.in]: businesses } },
+      attributes: ["fcmToken", "businessId"],
     });
 
-    devices.map((device) => {
-      const { fcmToken } = device;
-      PushNotificationService.sendNotification(fcmToken, title, body);
-    });
+    // Send notifications
+    await Promise.all(
+      devices.map((device) =>
+        PushNotificationService.sendNotification(device.fcmToken, title, body)
+      )
+    );
+
+    // Store notification per business
+    await Promise.all(
+      devices.map((device) =>
+        Notifications.create({
+          title,
+          message: body,
+          businessId: device.businessId,
+        })
+      )
+    );
+
     return res.json({
       success: true,
       message: "Notification sent successfully",
+      count: devices.length,
     });
   } catch (error) {
-    return res.json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-router.post(
-  "/sent-app-notification-with-image",
-  jwtMiddleware,
-  async (req, res) => {
-    try {
-      const user = req.user;
-      const userBusiness = await User.findByPk(user.id, {
-        attributes: ["businessId"],
+router.post("/sent-app-notification-with-image", async (req, res) => {
+  try {
+    const { title, body, businesses = [], imageUrl } = req.body;
+
+    if (!title || !body || !businesses.length || !imageUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, body, businesses and imageUrl are required",
       });
+    }
 
-      const { title, body, imageUrl } = req.body;
+    const devices = await Device.findAll({
+      where: { businessId: { [Op.in]: businesses } },
+      attributes: ["fcmToken", "businessId"],
+    });
 
-      const { businessId } = userBusiness.dataValues;
-      const devices = await Device.findAll({
-        where: { businessId: businessId },
-        attributes: ["fcmToken"],
-      });
-
-      devices.map((device) => {
-        const { fcmToken } = device;
+    // Send notifications
+    await Promise.all(
+      devices.map((device) =>
         PushNotificationService.sendNotificationWithImage(
-          fcmToken,
+          device.fcmToken,
           title,
           body,
           imageUrl
-        );
-      });
+        )
+      )
+    );
 
-      return res.json({
-        success: true,
-        message: "User fetched successfully",
-      });
-    } catch (error) {
-      return res.json({
-        success: false,
-        message: error.message,
-      });
-    }
+    // Store notification per business
+    await Promise.all(
+      devices.map((device) =>
+        Notifications.create({
+          title,
+          message: body,
+          businessId: device.businessId,
+          imageUrl,
+        })
+      )
+    );
+
+    return res.json({
+      success: true,
+      message: "Notification sent successfully",
+      count: devices.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-);
-
+});
 
 router.post("/send-app-notification-to-all-user", async (req, res) => {
   try {
@@ -101,10 +130,10 @@ router.post("/send-app-notification-to-all-user", async (req, res) => {
       });
     }
 
-    const tokens = [...new Set(devices.map(d => d.fcmToken))]; // remove duplicates
+    const tokens = [...new Set(devices.map((d) => d.fcmToken))]; // remove duplicates
 
     await Promise.all(
-      tokens.map(token =>
+      tokens.map((token) =>
         PushNotificationService.sendNotification(token, title, body)
       )
     );
@@ -114,13 +143,56 @@ router.post("/send-app-notification-to-all-user", async (req, res) => {
       message: "Notification sent successfully",
       count: tokens.length,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       error,
       success: false,
       message: "Failed to send notification",
+    });
+  }
+});
+
+router.get("/notification-exists", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business.dataValues;
+    const notificationExists = await Notifications.count({
+      where: { [Op.and]: [{ businessId: businessId }, { read: false }] },
+    });
+    return res.json({
+      success: notificationExists > 0,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+router.get("/notifications", jwtMiddleware, async (req, res) => {
+  try {
+    const user = req.user;
+    const business = await User.findByPk(user.id, {
+      attributes: ["businessId"],
+    });
+    const { businessId } = business.dataValues;
+    const notifications = await Notifications.findAll({
+      where: { businessId: businessId },
+      order: [["createdAt", "DESC"]],
+    });
+    return res.json({
+      success: true,
+      notifications,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 });
