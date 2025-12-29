@@ -161,7 +161,7 @@ router.get("/notification-exists", jwtMiddleware, async (req, res) => {
     });
     const { businessId } = business.dataValues;
     const notificationExists = await Notifications.count({
-      where: { [Op.and]: [{ businessId: businessId }, { read: false }] },
+      where: { businessId: businessId },
     });
     return res.json({
       success: notificationExists > 0,
