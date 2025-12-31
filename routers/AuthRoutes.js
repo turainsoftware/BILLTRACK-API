@@ -57,10 +57,11 @@ router.post("/remove-device-login", async (req, res) => {
           businessId: businessId,
         },
       });
-      await axios.post(SOCKET_API + "/logout", {
+      const response = await axios.post(SOCKET_API + "/logout", {
         roomId: businessId,
         devices: devices,
       });
+      console.log("socket response",response.data);
     }
 
     await Device.create({
