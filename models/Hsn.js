@@ -21,7 +21,7 @@ const Hsn = sequilize.define(
       },
     },
     description: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
       get() {
         return this.getDataValue("description");
