@@ -131,6 +131,8 @@ router.get("/", jwtMiddleware, async (req, res) => {
       },
     });
 
+    console.log("sort by is",sortBy)
+
     let order;
     if (sortBy === "date_desc") {
       order = [["createdAt", "DESC"]];
