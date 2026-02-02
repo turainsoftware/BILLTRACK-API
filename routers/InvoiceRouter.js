@@ -78,7 +78,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
         paymentMode: paymentMode,
         customerNumber,
       },
-      { transaction }
+      { transaction },
     );
 
     await InvoiceItems.bulkCreate(
@@ -90,7 +90,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
         gstType: item.gstType || null,
         gstPercentage: item.gstPercentage || null,
       })),
-      { transaction }
+      { transaction },
     );
 
     await transaction.commit();
@@ -121,6 +121,7 @@ router.get("/", jwtMiddleware, async (req, res) => {
 
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 0;
+    const sortBy = req.query.sortBy || "date_desc"; // date_asc || amount_high_to_low || amount_low_to_high
 
     const offset = page * limit;
 
@@ -130,6 +131,19 @@ router.get("/", jwtMiddleware, async (req, res) => {
       },
     });
 
+    let order;
+    if (sortBy === "date_desc") {
+      order = [["createdAt", "DESC"]];
+    } else if (sortBy === "date_asc") {
+      order = [["createdAt", "ASC"]];
+    } else if (sortBy === "amount_high_to_low") {
+      order = [["totalAmount", "DESC"]];
+    } else if (sortBy === "amount_low_to_high") {
+      order = [["totalAmount", "ASC"]];
+    } else {
+      order = [["createdAt", "DESC"]];
+    }
+
     const data = await Invoice.findAll({
       where: {
         businessId: businessId,
@@ -137,7 +151,7 @@ router.get("/", jwtMiddleware, async (req, res) => {
       attributes: { exclude: ["userId", "businessId", "updatedAt"] },
       offset: offset,
       limit: limit,
-      order: [["createdAt", "DESC"]],
+      order: order,
     });
 
     const totalPage = Math.ceil(total / limit);
@@ -322,7 +336,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         reportData,
         summary,
         fromDate,
-        toDate
+        toDate,
       );
     } else if (formatLower === "pdf") {
       base64 = await generatePDFReport(
@@ -330,7 +344,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         reportData,
         summary,
         fromDate,
-        toDate
+        toDate,
       );
     } else if (formatLower === "csv") {
       base64 = await generateCSVReport(
@@ -338,7 +352,7 @@ router.post("/generate", jwtMiddleware, async (req, res) => {
         reportData,
         summary,
         fromDate,
-        toDate
+        toDate,
       );
     }
     return res.send(base64);
@@ -358,7 +372,7 @@ const generateExcelReport = async (
   reportData,
   summary,
   fromDate,
-  toDate
+  toDate,
 ) => {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Billing System";
@@ -485,7 +499,7 @@ const generateExcelReport = async (
   sheet.mergeCells(`A${currentRow}:G${currentRow}`);
   const periodCell = sheet.getCell(`A${currentRow}`);
   periodCell.value = `Report Period: ${formatDateDisplay(
-    fromDate
+    fromDate,
   )} to ${formatDateDisplay(toDate)}`;
   periodCell.font = { size: 10, italic: true, color: { argb: "FF666666" } };
   periodCell.alignment = { horizontal: "center", vertical: "middle" };
@@ -609,7 +623,7 @@ const generateExcelReport = async (
   sheet.mergeCells(`A${currentRow}:G${currentRow}`);
   const footerCell = sheet.getCell(`A${currentRow}`);
   footerCell.value = `Report Generated:  ${new Date().toLocaleString(
-    "en-IN"
+    "en-IN",
   )} | Powered by Billing System`;
   footerCell.font = { size: 8, italic: true, color: { argb: "FF999999" } };
   footerCell.alignment = { horizontal: "center", vertical: "middle" };
@@ -722,11 +736,11 @@ const generatePDFReport = (business, reportData, summary, fromDate, toDate) => {
         .fillColor(colors.darkGray)
         .text(
           `Period: ${formatDateDisplay(fromDate)} to ${formatDateDisplay(
-            toDate
+            toDate,
           )}`,
           startX,
           y + 18,
-          { width: pageWidth, align: "center" }
+          { width: pageWidth, align: "center" },
         );
 
       doc
@@ -893,7 +907,7 @@ const generateCSVReport = async (
   reportData,
   summary,
   fromDate,
-  toDate
+  toDate,
 ) => {
   // Create a well-structured CSV with clear sections
   const csvRows = [];
