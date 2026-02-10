@@ -113,6 +113,11 @@ const addBusiness = async (req, res) => {
       }
     }
 
+    const prefix = name
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
+
     // Persist business
     const newBusiness = await Business.create({
       name: normalizedName,
@@ -125,11 +130,12 @@ const addBusiness = async (req, res) => {
       phone: normalizedPhone ?? null,
       businessCategoryId: categoryIdNum,
       logoUrl: req.file.filename,
+      prefix,
     });
 
     await User.update(
       { businessId: newBusiness.id },
-      { where: { id: userId } }
+      { where: { id: userId } },
     );
 
     await Subscription.create({
@@ -212,7 +218,7 @@ const updateAddress = async (req, res) => {
 
     await Business.update(
       { street, city, state, pincode },
-      { where: { id: user.businessId } }
+      { where: { id: user.businessId } },
     );
     return res
       .json({ message: "Successfully updated", status: true })
