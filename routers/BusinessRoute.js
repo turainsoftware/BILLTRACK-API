@@ -100,7 +100,7 @@ router.put("/update", jwtMiddleware, async (req, res) => {
     }
     const { businessId } = userBusiness.dataValues;
 
-    const { gstNumber, street, city, state, pinCode, email, phone } = req.body;
+    const { gstNumber, street, city, state, pinCode, email, phone,prefix } = req.body;
 
     const payload = {};
     if (gstNumber) {
@@ -124,7 +124,9 @@ router.put("/update", jwtMiddleware, async (req, res) => {
     if (phone) {
       payload.phone = phone;
     }
-
+    if (prefix) {
+      payload.prefix = prefix;
+    }
     await Business.update(payload, {
       where: { id: businessId },
     });

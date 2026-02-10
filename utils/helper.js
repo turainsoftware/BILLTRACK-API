@@ -24,4 +24,38 @@ function generateInvoiceNumber(businessId) {
   return prefix + randomPart;
 }
 
-module.exports = { generateInvoiceNumber };
+const generateNamePrefix = (name) => {
+  // Validate input - must be a string
+  if (typeof name !== "string") {
+    return "";
+  }
+
+  // Trim all extra spaces and convert to a normalized form
+  const trimmedName = name.trim();
+
+  // Handle empty string
+  if (!trimmedName) {
+    return "";
+  }
+
+  // Split by spaces and filter out empty strings (handles multiple consecutive spaces)
+  const words = trimmedName.split(/\s+/).filter((word) => word.length > 0);
+
+  // Case 1: Multiple words - take first letter of each word
+  if (words.length > 1) {
+    return words.map((word) => word.charAt(0).toUpperCase()).join("");
+  }
+
+  // Case 2: Single word
+  const singleWord = words[0];
+
+  // Case 2a: Single character - return it in uppercase
+  if (singleWord.length === 1) {
+    return singleWord.toUpperCase();
+  }
+
+  // Case 2b: Single word with multiple characters - return first TWO characters
+  return singleWord.substring(0, 2).toUpperCase();
+};
+
+module.exports = { generateInvoiceNumber, generateNamePrefix };
