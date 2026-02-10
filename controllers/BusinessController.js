@@ -6,6 +6,7 @@ const { User } = require("../models/User");
 const { Device } = require("../models/Devices");
 const Subscription = require("./../models/Subscription");
 const { generateNamePrefix } = require("../utils/helper");
+const { Invoice } = require("../models/Invoice");
 
 function deleteUploadedFileSafely(file) {
   if (!file?.path && file?.filename) {
@@ -156,7 +157,7 @@ const addBusiness = async (req, res) => {
     return res.status(201).json({
       message: "Business created successfully",
       status: true,
-      data: newBusiness,
+      data: { ...newBusiness, numberOfInvoices: 1 },
     });
   } catch (error) {
     if (req.file) {
@@ -194,7 +195,12 @@ const getBusiness = async (req, res) => {
         id: user.businessId,
       },
     });
-    return res.json({ data: business, status: true });
+    const numberOfInvoices = await Invoice.count({
+      where: {
+        businessId: user.businessId,
+      },
+    });
+    return res.json({ data: { ...business, numberOfInvoices }, status: true });
   } catch (error) {
     return res
       .status(500)
