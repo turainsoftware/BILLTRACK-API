@@ -5,6 +5,7 @@ const { Business } = require("../models/Business");
 const { User } = require("../models/User");
 const { Device } = require("../models/Devices");
 const Subscription = require("./../models/Subscription");
+const { generateNamePrefix } = require("../utils/helper");
 
 function deleteUploadedFileSafely(file) {
   if (!file?.path && file?.filename) {
@@ -113,10 +114,7 @@ const addBusiness = async (req, res) => {
       }
     }
 
-    const prefix = name
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase())
-      .join("");
+    const prefix = generateNamePrefix(normalizedName);
 
     // Persist business
     const newBusiness = await Business.create({
