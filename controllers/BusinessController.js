@@ -156,7 +156,7 @@ const addBusiness = async (req, res) => {
     return res.status(201).json({
       message: "Business created successfully",
       status: true,
-      data: newBusiness,
+      data: { ...newBusiness, numberOfInvoices: 1 },
     });
   } catch (error) {
     if (req.file) {
