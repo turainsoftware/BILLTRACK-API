@@ -21,6 +21,7 @@ const Business = sequilize.define(
     prefix: {
       type: DataTypes.STRING,
       allowNull: true,
+      validate: { len: { min: 1, max: 6 } },
     },
     gstNumber: {
       type: DataTypes.STRING,
@@ -78,7 +79,7 @@ const Business = sequilize.define(
   {
     tableName: "Business",
     timestamps: true,
-  }
+  },
 );
 
 Business.belongsTo(BusinessCategory, {
