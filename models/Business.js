@@ -18,6 +18,10 @@ const Business = sequilize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    prefix: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     gstNumber: {
       type: DataTypes.STRING,
       allowNull: true,
