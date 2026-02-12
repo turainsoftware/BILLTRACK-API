@@ -207,7 +207,9 @@ const getBusiness = async (req, res) => {
         businessId: user.businessId,
       },
     });
-    return res.json({ data: { ...business, numberOfInvoices }, status: true });
+    const businessData = business.get({ plain: true });
+    businessData.numberOfInvoices = numberOfInvoices;
+    return res.json({ data: businessData, status: true });
   } catch (error) {
     return res
       .status(500)
