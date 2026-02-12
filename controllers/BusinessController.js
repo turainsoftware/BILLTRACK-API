@@ -5,7 +5,10 @@ const { Business } = require("../models/Business");
 const { User } = require("../models/User");
 const { Device } = require("../models/Devices");
 const Subscription = require("./../models/Subscription");
-const { generateNamePrefix } = require("../utils/helper");
+const {
+  generateNamePrefix,
+  getCurrentFinancialYearCreatedAt,
+} = require("../utils/helper");
 const { Invoice } = require("../models/Invoice");
 
 function deleteUploadedFileSafely(file) {
@@ -205,6 +208,7 @@ const getBusiness = async (req, res) => {
     const numberOfInvoices = await Invoice.count({
       where: {
         businessId: user.businessId,
+        ...getCurrentFinancialYearCreatedAt(),
       },
     });
     const businessData = business.get({ plain: true });
