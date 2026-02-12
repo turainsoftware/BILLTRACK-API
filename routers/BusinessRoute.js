@@ -17,6 +17,7 @@ const {
   getBusiness,
   updateAddress,
 } = require("../controllers/BusinessController");
+const { Invoice } = require("../models/Invoice");
 
 // Ensure logo directory exists
 if (!fs.existsSync(LOGO_DIR)) {
@@ -131,10 +132,17 @@ router.put("/update", jwtMiddleware, async (req, res) => {
       where: { id: businessId },
     });
     const updatedBusiness = await Business.findByPk(businessId);
+    const numberOfInvoices = await Invoice.count({
+      where: { businessId },
+    });
+
+    const sendableBusiness=updatedBusiness.get();
+    sendableBusiness.numberOfInvoices=numberOfInvoices+1;
+    
     return res.json({
       status: true,
       message: "Business updated successfully",
-      business: updatedBusiness,
+      business: sendableBusiness,
     });
   } catch (error) {
     return res.json({
