@@ -208,7 +208,7 @@ const getBusiness = async (req, res) => {
       },
     });
     const businessData = business.get({ plain: true });
-    businessData.numberOfInvoices = numberOfInvoices;
+    businessData.numberOfInvoices = numberOfInvoices + 1;
     return res.json({ data: businessData, status: true });
   } catch (error) {
     return res
