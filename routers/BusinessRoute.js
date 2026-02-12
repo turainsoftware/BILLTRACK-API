@@ -17,6 +17,8 @@ const {
   getBusiness,
   updateAddress,
 } = require("../controllers/BusinessController");
+const { Invoice } = require("../models/Invoice");
+const { getCurrentFinancialYearCreatedAt } = require("../utils/helper");
 
 // Ensure logo directory exists
 if (!fs.existsSync(LOGO_DIR)) {
@@ -48,7 +50,7 @@ const storage = multer.diskStorage({
 function fileFilter(req, file, cb) {
   if (!ALLOWED_MIME[file.mimetype]) {
     return cb(
-      new Error("Only PNG, JPG, and WEBP image types are allowed for the logo")
+      new Error("Only PNG, JPG, and WEBP image types are allowed for the logo"),
     );
   }
   cb(null, true);
@@ -100,7 +102,8 @@ router.put("/update", jwtMiddleware, async (req, res) => {
     }
     const { businessId } = userBusiness.dataValues;
 
-    const { gstNumber, street, city, state, pinCode, email, phone,prefix } = req.body;
+    const { gstNumber, street, city, state, pinCode, email, phone, prefix } =
+      req.body;
 
     const payload = {};
     if (gstNumber) {
@@ -131,10 +134,17 @@ router.put("/update", jwtMiddleware, async (req, res) => {
       where: { id: businessId },
     });
     const updatedBusiness = await Business.findByPk(businessId);
+    const numberOfInvoices = await Invoice.count({
+      where: { businessId, ...getCurrentFinancialYearCreatedAt() },
+    });
+
+    const sendableBusiness = updatedBusiness.get();
+    sendableBusiness.numberOfInvoices = numberOfInvoices + 1;
+
     return res.json({
       status: true,
       message: "Business updated successfully",
-      business: updatedBusiness,
+      business: sendableBusiness,
     });
   } catch (error) {
     return res.json({

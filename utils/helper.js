@@ -1,3 +1,5 @@
+const { Op } = require("sequelize");
+
 function generateInvoiceNumber(businessId) {
   const prefix = "INV" + businessId; // e.g., INV45
   const minLen = 12;
@@ -58,4 +60,32 @@ const generateNamePrefix = (name) => {
   return singleWord.substring(0, 2).toUpperCase();
 };
 
-module.exports = { generateInvoiceNumber, generateNamePrefix };
+function getCurrentFinancialYearCreatedAt(date = new Date()) {
+  const now = new Date(date);
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0 = Jan, 3 = April
+
+  let startDate, endDate;
+
+  if (month >= 3) {
+    // April or later
+    startDate = new Date(year, 3, 1, 0, 0, 0, 0);
+    endDate = new Date(year + 1, 3, 0, 23, 59, 59, 999);
+  } else {
+    // Jan–March
+    startDate = new Date(year - 1, 3, 1, 0, 0, 0, 0);
+    endDate = new Date(year, 3, 0, 23, 59, 59, 999);
+  }
+
+  return {
+    createdAt: {
+      [Op.between]: [startDate, endDate],
+    },
+  };
+}
+
+module.exports = {
+  generateInvoiceNumber,
+  generateNamePrefix,
+  getCurrentFinancialYearCreatedAt,
+};
