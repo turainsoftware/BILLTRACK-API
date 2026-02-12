@@ -25,7 +25,7 @@ const Invoice = sequilize.define(
     invoiceNumber: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
     },
     totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
