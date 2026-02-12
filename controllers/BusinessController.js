@@ -144,6 +144,13 @@ const addBusiness = async (req, res) => {
     if (newBusiness?.id) {
       const { fcmToken, deviceType, deviceModel, deviceName, deviceUniqueKey } =
         req.body;
+
+      const isExist = await Device.findOne({ where: { deviceUniqueKey } });
+
+      if (isExist) {
+        await Device.destroy({ where: { deviceUniqueKey } });
+      }
+
       await Device.create({
         fcmToken,
         deviceType,
