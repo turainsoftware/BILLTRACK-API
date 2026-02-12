@@ -23,6 +23,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
       items = [],
       paymentMode,
       discount,
+      invoiceNumber
     } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
     if (!allowedStatus.includes(status)) {
@@ -65,7 +66,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
 
     transaction = await Invoice.sequelize.transaction();
 
-    const invoiceNumber = generateInvoiceNumber(businessId);
+    // const invoiceNumber = generateInvoiceNumber(businessId);
 
     const invoice = await Invoice.create(
       {
