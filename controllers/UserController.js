@@ -154,6 +154,7 @@ const updateProfile=async (req, res) => {
       .json({ message: "Successfully updated", status: true })
       .status(200);
   } catch (error) {
+    console.log(error);
     return res.json({ message: "Something went wrong", status: false });
   }
 }
