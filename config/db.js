@@ -15,7 +15,7 @@ const sequilize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   dialect: DB_DIALECT,
   timezone: "+05:30",
   dialectOptions: {
-    // useUTC: false,
+    useUTC: false,
     dateStrings: true,
     typeCast: true,
   },
