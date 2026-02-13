@@ -5,7 +5,10 @@ const { transform } = require("pdfkit");
 const router = express.Router();
 const { User } = require("./../models/User");
 const { jwtMiddleware } = require("./../middleware/JwtMiddlware");
-const { generateInvoiceNumber } = require("../utils/helper");
+const {
+  generateInvoiceNumber,
+  getCurrentFinancialYearCreatedAt,
+} = require("../utils/helper");
 const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
 const { Parser } = require("json2csv");
@@ -23,7 +26,7 @@ router.post("/", jwtMiddleware, async (req, res) => {
       items = [],
       paymentMode,
       discount,
-      invoiceNumber
+      invoiceNumber,
     } = req.body;
     const allowedStatus = ["paid", "unpaid", "canceled"];
     if (!allowedStatus.includes(status)) {
@@ -132,7 +135,7 @@ router.get("/", jwtMiddleware, async (req, res) => {
       },
     });
 
-    console.log("sort by is",sortBy)
+    console.log("sort by is", sortBy);
 
     let order;
     if (sortBy === "date_desc") {
@@ -170,6 +173,21 @@ router.get("/", jwtMiddleware, async (req, res) => {
         status: true,
       })
       .status(200);
+  } catch (error) {
+    return res.json({ error, message: "Something went wrong", status: false });
+  }
+});
+
+router.get("/count/:businessId", jwtMiddleware, async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const count = await Invoice.count({
+      where: {
+        businessId: businessId,
+        ...getCurrentFinancialYearCreatedAt(),
+      },
+    });
+    return res.json({ count, status: true }).status(200);
   } catch (error) {
     return res.json({ error, message: "Something went wrong", status: false });
   }
