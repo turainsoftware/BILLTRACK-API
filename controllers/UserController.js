@@ -105,7 +105,7 @@ const verifyOtp = async (req, res) => {
   } catch (error) {}
 };
 
-const deactiveUser=async (req, res) => {
+const deactiveUser = async (req, res) => {
   try {
     const user = req.user;
     if (user?.role !== "ADMIN") {
@@ -115,7 +115,7 @@ const deactiveUser=async (req, res) => {
 
     const updateUser = await User.update(
       { isActive: false },
-      { where: { id } }
+      { where: { id } },
     );
     return res
       .json({ message: "Successfully updated", status: true })
@@ -123,9 +123,9 @@ const deactiveUser=async (req, res) => {
   } catch (error) {
     return res.json({ message: "Something went wrong", status: false });
   }
-}
+};
 
-const reactiveUser=async (req, res) => {
+const reactiveUser = async (req, res) => {
   try {
     const user = req.user;
     if (user?.role !== "ADMIN") {
@@ -140,16 +140,20 @@ const reactiveUser=async (req, res) => {
   } catch (error) {
     return res.json({ message: "Something went wrong", status: false });
   }
-}
+};
 
-const updateProfile=async (req, res) => {
+const updateProfile = async (req, res) => {
   try {
     const user = req.user;
     const { name, email } = req.body;
-    const updateUser = await User.update(
-      { name, email },
-      { where: { id: user.id } }
-    );
+    const payload = {};
+    if (name) {
+      payload.name = name;
+    }
+    if (email) {
+      payload.email = email;
+    }
+    const updateUser = await User.update(payload, { where: { id: user.id } });
     return res
       .json({ message: "Successfully updated", status: true })
       .status(200);
@@ -157,7 +161,7 @@ const updateProfile=async (req, res) => {
     console.log(error);
     return res.json({ message: "Something went wrong", status: false });
   }
-}
+};
 
 module.exports = {
   profile,
@@ -165,5 +169,5 @@ module.exports = {
   createUser,
   deactiveUser,
   reactiveUser,
-  updateProfile
+  updateProfile,
 };
